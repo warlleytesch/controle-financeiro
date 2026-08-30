@@ -1,0 +1,2129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Império - Controle Financeiro</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+    <style>
+        /* ============================
+                   RESET E ESTILOS GERAIS
+                ============================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --bg-primary: #f0f2f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-input: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #6c757d;
+            --text-light: #868e96;
+            --border-color: #edf2f7;
+            --border-input: #dee2e6;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --tab-bg: #f1f3f5;
+            --badge-receita-bg: #d4edda;
+            --badge-receita-text: #155724;
+            --badge-despesa-bg: #f8d7da;
+            --badge-despesa-text: #721c24;
+            --badge-aumento-bg: #cce5ff;
+            --badge-aumento-text: #004085;
+            --badge-fatura-bg: #fff3cd;
+            --badge-fatura-text: #856404;
+            --btn-google-bg: #4285F4;
+            --btn-google-hover: #357ae8;
+        }
+
+        body.dark-mode {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #2d2d44;
+            --bg-card: #2d2d44;
+            --bg-input: #3d3d5c;
+            --text-primary: #e9ecef;
+            --text-secondary: #adb5bd;
+            --text-light: #868e96;
+            --border-color: #3d3d5c;
+            --border-input: #4d4d6e;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+            --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --tab-bg: #2d2d44;
+            --badge-receita-bg: #1e4620;
+            --badge-receita-text: #8fdf9f;
+            --badge-despesa-bg: #4a1a1a;
+            --badge-despesa-text: #f8a0a0;
+            --badge-aumento-bg: #1a2a4a;
+            --badge-aumento-text: #8fcbff;
+            --badge-fatura-bg: #4a3a1a;
+            --badge-fatura-text: #ffd980;
+        }
+
+        body {
+            background: var(--bg-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            width: 100%;
+            background: var(--bg-secondary);
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 24px 28px 40px;
+            transition: background 0.3s;
+        }
+
+        /* ============================
+                   HEADER
+                ============================ */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            color: var(--text-primary);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            transition: color 0.3s;
+        }
+
+        .header h1 span {
+            color: #2ecc71;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .header-date {
+            color: var(--text-secondary);
+            font-size: 14px;
+            background: var(--tab-bg);
+            padding: 6px 16px;
+            border-radius: 30px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .btn-darkmode {
+            background: var(--tab-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: 0.2s;
+            color: var(--text-primary);
+        }
+
+        .btn-darkmode:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-auth {
+            background: var(--btn-google-bg);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-auth:hover {
+            background: var(--btn-google-hover);
+            transform: scale(1.02);
+        }
+
+        .btn-auth.logout {
+            background: #e74c3c;
+        }
+
+        .btn-auth.logout:hover {
+            background: #c0392b;
+        }
+
+        .auth-status {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .auth-status .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .auth-status .dot.online {
+            background: #2ecc71;
+        }
+        .auth-status .dot.offline {
+            background: #e74c3c;
+        }
+
+        /* ============================
+                   TABS (ABAS)
+                ============================ */
+        .tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 28px;
+            background: var(--tab-bg);
+            padding: 6px;
+            border-radius: 16px;
+            transition: background 0.3s;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 0;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.25s;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-btn.active {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fade 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fade {
+            0% {
+                opacity: 0.4;
+                transform: translateY(6px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================
+                   CARDS (PÁGINA INICIAL)
+                ============================ */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 18px;
+            padding: 20px 22px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: 0.2s;
+        }
+
+        .card:hover {
+            border-color: #2ecc71;
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-label {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: var(--text-light);
+            margin-bottom: 6px;
+            transition: color 0.3s;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            transition: color 0.3s;
+        }
+
+        .card-value.positive {
+            color: #2ecc71;
+        }
+        .card-value.negative {
+            color: #e74c3c;
+        }
+        .card-value.neutral {
+            color: #f39c12;
+        }
+
+        .card-sub {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-top: 4px;
+            transition: color 0.3s;
+        }
+
+        /* ============================
+                   CONTAS A VENCER
+                ============================ */
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: color 0.3s;
+        }
+
+        .section-title small {
+            font-weight: 400;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .vencer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .vencer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-card);
+            padding: 12px 18px;
+            border-radius: 12px;
+            border-left: 4px solid #e74c3c;
+            flex-wrap: wrap;
+            border: 1px solid var(--border-color);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .vencer-item .desc {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .vencer-item .date {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .vencer-item .value {
+            font-weight: 600;
+            color: #e74c3c;
+        }
+
+        .empty-message {
+            color: var(--text-light);
+            font-size: 15px;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        /* ============================
+                   FORMULÁRIO (ABA CONTROLE)
+                ============================ */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: color 0.3s;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border-input);
+            font-size: 14px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            transition: 0.2s, background 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2ecc71;
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-light);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .btn {
+            padding: 10px 28px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: #2ecc71;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #27ae60;
+            transform: scale(1.02);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--border-input);
+            color: var(--text-secondary);
+        }
+        .btn-outline:hover {
+            background: var(--tab-bg);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: #fff;
+        }
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .btn-sm {
+            padding: 6px 16px;
+            font-size: 12px;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #1a1a2e;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-sync {
+            background: #6f42c1;
+            color: #fff;
+        }
+        .btn-sync:hover {
+            background: #5a32a3;
+        }
+        .btn-sync.synced {
+            background: #2ecc71;
+        }
+
+        /* ============================
+                   TABELA DE LANÇAMENTOS
+                ============================ */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 20px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            transition: border-color 0.3s;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background: var(--tab-bg);
+            text-align: left;
+            padding: 12px 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+            color: var(--text-primary);
+            transition: border-color 0.3s, color 0.3s;
+        }
+
+        tr:hover td {
+            background: var(--tab-bg);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-receita {
+            background: var(--badge-receita-bg);
+            color: var(--badge-receita-text);
+        }
+        .badge-despesa {
+            background: var(--badge-despesa-bg);
+            color: var(--badge-despesa-text);
+        }
+        .badge-aumento {
+            background: var(--badge-aumento-bg);
+            color: var(--badge-aumento-text);
+        }
+        .badge-fatura {
+            background: var(--badge-fatura-bg);
+            color: var(--badge-fatura-text);
+        }
+
+        .text-danger {
+            color: #e74c3c;
+        }
+        .text-success {
+            color: #2ecc71;
+        }
+        .text-warning {
+            color: #f39c12;
+        }
+        .text-info {
+            color: #17a2b8;
+        }
+        .fw-bold {
+            font-weight: 600;
+        }
+
+        /* ============================
+                   ABA RESERVAS
+                ============================ */
+        .reservas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 18px 0 28px;
+        }
+
+        .reserva-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 18px 20px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .reserva-card .name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+        .reserva-card .value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2ecc71;
+            margin: 4px 0;
+        }
+        .reserva-card .date {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .reserva-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            align-items: flex-end;
+            background: var(--tab-bg);
+            padding: 18px 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            transition: background 0.3s;
+        }
+
+        .reserva-form .form-group {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .reserva-form .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        /* ============================
+                   GRÁFICO SIMPLES (canvas)
+                ============================ */
+        .chart-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 18px;
+            border: 1px solid var(--border-color);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .chart-container canvas {
+            width: 100% !important;
+            max-height: 260px;
+        }
+
+        /* ============================
+                   CATEGORIAS
+                ============================ */
+        .categoria-form {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 12px 0 18px;
+            padding: 12px 16px;
+            background: var(--tab-bg);
+            border-radius: 12px;
+            transition: background 0.3s;
+        }
+
+        .categoria-form .form-group {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .categoria-form .btn {
+            padding: 8px 20px;
+        }
+
+        .categoria-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 8px 0 12px;
+        }
+
+        .categoria-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--tab-bg);
+            padding: 4px 12px 4px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        .categoria-tag .remove-cat {
+            cursor: pointer;
+            color: #e74c3c;
+            font-weight: 700;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .categoria-tag .remove-cat:hover {
+            transform: scale(1.2);
+        }
+
+        /* ============================
+                   IMPORTAÇÃO/EXPORTAÇÃO
+                ============================ */
+        .import-export-area {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 16px 0 20px;
+            padding: 16px;
+            background: var(--tab-bg);
+            border-radius: 14px;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .import-export-area .form-group {
+            flex: 0 0 auto;
+        }
+
+        .import-export-area input[type="file"] {
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border-input);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            max-width: 200px;
+        }
+
+        /* ============================
+                   SYNC STATUS BAR
+                ============================ */
+        .sync-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            background: var(--tab-bg);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            transition: background 0.3s;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .sync-bar .status {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sync-bar .status .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border-color);
+            border-top-color: #2ecc71;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        .sync-bar .status .spinner.active {
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ============================
+                   RESPONSIVO
+                ============================ */
+        @media (max-width: 600px) {
+            .app-container {
+                padding: 16px;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .card-value {
+                font-size: 22px;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .vencer-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+            .tabs .tab-btn {
+                font-size: 13px;
+                padding: 10px 0;
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+                margin-top: 8px;
+            }
+            .import-export-area {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .import-export-area input[type="file"] {
+                max-width: 100%;
+            }
+            .sync-bar {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+            .btn-auth {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container" id="app">
+
+        <!-- ============================
+        HEADER
+        ============================ -->
+        <header class="header">
+            <h1>👑 <span>Império</span> - Controle Financeiro</h1>
+            <div class="header-actions">
+                <div class="header-date" id="headerDate"></div>
+                <div class="auth-status" id="authStatus">
+                    <span class="dot offline" id="statusDot"></span>
+                    <span id="statusText">Offline</span>
+                </div>
+                <button class="btn-auth" id="btnAuth">🔑 Entrar com Google</button>
+                <button class="btn-darkmode" id="btnDarkMode" title="Alternar tema">🌙</button>
+            </div>
+        </header>
+
+        <!-- ============================
+        SYNC STATUS BAR
+        ============================ -->
+        <div class="sync-bar">
+            <div class="status">
+                <span>📡 Sincronização:</span>
+                <span id="syncStatus">Local</span>
+                <span class="spinner" id="syncSpinner"></span>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn btn-sync btn-sm" id="btnSyncNow">🔄 Sincronizar agora</button>
+                <button class="btn btn-success btn-sm" id="btnBackupLocal">💾 Backup Local</button>
+            </div>
+        </div>
+
+        <!-- ============================
+        TABS
+        ============================ -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="tab1">📊 Início</button>
+            <button class="tab-btn" data-tab="tab2">✏️ Controle</button>
+            <button class="tab-btn" data-tab="tab3">🏦 Reservas</button>
+        </div>
+
+        <!-- ============================
+        ABA 1 – INÍCIO
+        ============================ -->
+        <div class="tab-content active" id="tab1">
+
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-label">💰 Saldo disponível</div>
+                    <div class="card-value positive" id="saldoDisponivel">R$ 0,00</div>
+                    <div class="card-sub">Receitas - Despesas</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">💳 Crédito disponível</div>
+                    <div class="card-value neutral" id="creditoDisponivel">R$ 0,00</div>
+                    <div class="card-sub">Limite - Utilizado</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">🏦 Reserva financeira</div>
+                    <div class="card-value positive" id="totalReservas">R$ 0,00</div>
+                    <div class="card-sub">Total em reservas</div>
+                </div>
+            </div>
+
+            <div class="section-title">
+                📅 Contas a vencer (próximos 7 dias)
+                <small>— fique atento!</small>
+            </div>
+            <div class="vencer-list" id="vencerList">
+                <div class="empty-message">Nenhuma conta próxima do vencimento.</div>
+            </div>
+        </div>
+
+        <!-- ============================
+        ABA 2 – CONTROLE
+        ============================ -->
+        <div class="tab-content" id="tab2">
+
+            <h3 style="margin-bottom:12px; color:var(--text-primary);">➕ Novo lançamento</h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="tipoLancamento">
+                        <option value="receita">Receita</option>
+                        <option value="despesa">Despesa</option>
+                        <option value="aumento_limite">📈 Aumento de Limite</option>
+                        <option value="fatura">💳 Fatura do Mês</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="categoriaLancamento">
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <input type="text" id="descLancamento" placeholder="Ex: Salário, Aluguel..." />
+                </div>
+                <div class="form-group">
+                    <label>Valor (R$)</label>
+                    <input type="number" id="valorLancamento" placeholder="0,00" step="0.01" />
+                </div>
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" id="dataLancamento" />
+                </div>
+                <div class="form-group">
+                    <label>Parcelas</label>
+                    <input type="number" id="parcelasLancamento" value="1" min="1" max="60" />
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" id="btnAddLancamento">✅ Adicionar</button>
+                <button class="btn btn-outline" id="btnLimparFiltros">🔄 Limpar filtros</button>
+            </div>
+
+            <!-- Gerenciar Categorias -->
+            <div class="categoria-form">
+                <span style="font-weight:600; color:var(--text-secondary);">🏷️ Categorias:</span>
+                <div class="form-group" style="flex:1; min-width:140px;">
+                    <input type="text" id="novaCategoria" placeholder="Nova categoria..." />
+                </div>
+                <button class="btn btn-info btn-sm" id="btnAddCategoria">➕ Adicionar</button>
+                <div class="categoria-tags" id="categoriaTags"></div>
+            </div>
+
+            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin:12px 0;">
+                <span style="font-weight:600; color:var(--text-secondary);">Filtrar por:</span>
+                <select id="filtroTipo" style="padding:6px 12px; border-radius:8px; border:1px solid var(--border-input); background:var(--bg-input); color:var(--text-primary);">
+                    <option value="todos">Todos</option>
+                    <option value="receita">Receitas</option>
+                    <option value="despesa">Despesas</option>
+                    <option value="aumento_limite">Aumento de Limite</option>
+                    <option value="fatura">Faturas</option>
+                </select>
+                <input type="month" id="filtroMes" style="padding:6px 12px; border-radius:8px; border:1px solid var(--border-input); background:var(--bg-input); color:var(--text-primary);" />
+                <select id="filtroCategoria" style="padding:6px 12px; border-radius:8px; border:1px solid var(--border-input); background:var(--bg-input); color:var(--text-primary);">
+                    <option value="todas">Todas categorias</option>
+                </select>
+            </div>
+
+            <!-- Importação / Exportação -->
+            <div class="import-export-area">
+                <button class="btn btn-success" id="btnExportarCSV">📤 Exportar CSV</button>
+                <div class="form-group" style="flex:0 0 auto;">
+                    <label style="font-size:12px; text-transform:uppercase; color:var(--text-light);">Importar CSV</label>
+                    <input type="file" id="fileInput" accept=".csv" />
+                </div>
+                <button class="btn btn-warning" id="btnImportarCSV">📥 Importar</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>Tipo</th>
+                            <th>Categoria</th>
+                            <th>Valor</th>
+                            <th>Parcelas</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaLancamentos">
+                        <tr><td colspan="7" style="text-align:center; color:var(--text-light);">Nenhum lançamento ainda.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============================
+        ABA 3 – RESERVAS
+        ============================ -->
+        <div class="tab-content" id="tab3">
+
+            <h3 style="margin-bottom:6px; color:var(--text-primary);">🏦 Reservas financeiras</h3>
+            <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">Acompanhe seus fundos e evolução.</p>
+
+            <div class="reservas-grid" id="reservasGrid">
+                <div class="empty-message" style="grid-column:1/-1;">Nenhuma reserva cadastrada.</div>
+            </div>
+
+            <div class="reserva-form">
+                <div class="form-group">
+                    <label>Nome da reserva</label>
+                    <input type="text" id="nomeReserva" placeholder="Ex: Emergência, Viagem..." />
+                </div>
+                <div class="form-group">
+                    <label>Valor (R$)</label>
+                    <input type="number" id="valorReserva" placeholder="0,00" step="0.01" />
+                </div>
+                <div class="form-group">
+                    <label>Data (histórico)</label>
+                    <input type="date" id="dataReserva" />
+                </div>
+                <div class="form-group" style="justify-content:flex-end;">
+                    <button class="btn btn-primary" id="btnAddReserva">➕ Registrar</button>
+                </div>
+            </div>
+
+            <div class="section-title" style="margin-top:24px;">
+                📈 Evolução das reservas
+            </div>
+            <div class="chart-container">
+                <canvas id="graficoReservas"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ============================================================
+        //  CONFIGURAÇÃO DO FIREBASE - SUAS CREDENCIAIS
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6eWS-N2hacE2Uyn5gCwf6m1P169T_y_4",
+            authDomain: "controle-financeiro-60807.firebaseapp.com",
+            projectId: "controle-financeiro-60807",
+            storageBucket: "controle-financeiro-60807.firebasestorage.app",
+            messagingSenderId: "1002617004174",
+            appId: "1:1002617004174:web:d3c55c61dd5ca19b2d29df"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // ============================================================
+        //  JAVASCRIPT COMPLETO – IMPÉRIO CONTROLE FINANCEIRO
+        // ============================================================
+
+        (function() {
+            'use strict';
+
+            // ---------- CHAVES DO localStorage ----------
+            const STORAGE_LANCAMENTOS = 'imperio_lancamentos';
+            const STORAGE_RESERVAS = 'imperio_reservas';
+            const STORAGE_CATEGORIAS = 'imperio_categorias';
+            const STORAGE_DARKMODE = 'imperio_darkmode';
+            const STORAGE_LIMITE_CREDITO = 'imperio_limite_credito';
+            const STORAGE_USER = 'imperio_user';
+
+            // ---------- ELEMENTOS DOM ----------
+            const saldoEl = document.getElementById('saldoDisponivel');
+            const creditoEl = document.getElementById('creditoDisponivel');
+            const totalReservasEl = document.getElementById('totalReservas');
+            const vencerList = document.getElementById('vencerList');
+            const tabelaBody = document.getElementById('tabelaLancamentos');
+            const reservasGrid = document.getElementById('reservasGrid');
+
+            // Formulário lançamentos
+            const tipoLanc = document.getElementById('tipoLancamento');
+            const categoriaLanc = document.getElementById('categoriaLancamento');
+            const descLanc = document.getElementById('descLancamento');
+            const valorLanc = document.getElementById('valorLancamento');
+            const dataLanc = document.getElementById('dataLancamento');
+            const parcelasLanc = document.getElementById('parcelasLancamento');
+            const btnAdd = document.getElementById('btnAddLancamento');
+
+            // Filtros
+            const filtroTipo = document.getElementById('filtroTipo');
+            const filtroMes = document.getElementById('filtroMes');
+            const filtroCategoria = document.getElementById('filtroCategoria');
+
+            // Categorias
+            const novaCategoriaInput = document.getElementById('novaCategoria');
+            const btnAddCategoria = document.getElementById('btnAddCategoria');
+            const categoriaTags = document.getElementById('categoriaTags');
+
+            // Reservas
+            const nomeReserva = document.getElementById('nomeReserva');
+            const valorReserva = document.getElementById('valorReserva');
+            const dataReserva = document.getElementById('dataReserva');
+            const btnAddReserva = document.getElementById('btnAddReserva');
+
+            // Import/Export
+            const btnExportarCSV = document.getElementById('btnExportarCSV');
+            const fileInput = document.getElementById('fileInput');
+            const btnImportarCSV = document.getElementById('btnImportarCSV');
+
+            // Gráfico
+            const canvas = document.getElementById('graficoReservas');
+            let ctx = canvas.getContext('2d');
+
+            // Dark Mode
+            const btnDarkMode = document.getElementById('btnDarkMode');
+
+            // Auth
+            const btnAuth = document.getElementById('btnAuth');
+            const authStatus = document.getElementById('authStatus');
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+
+            // Sync
+            const btnSyncNow = document.getElementById('btnSyncNow');
+            const btnBackupLocal = document.getElementById('btnBackupLocal');
+            const syncStatus = document.getElementById('syncStatus');
+            const syncSpinner = document.getElementById('syncSpinner');
+
+            // ---------- DADOS ----------
+            let lancamentos = [];
+            let reservas = [];
+            let categorias = [];
+            let limiteCredito = 0;
+            let currentUser = null;
+            let isSyncing = false;
+            let isInitialLoad = true;
+
+            // ---------- FUNÇÕES DE CARGA / SALVO ----------
+            function carregarDadosLocal() {
+                try {
+                    const rawL = localStorage.getItem(STORAGE_LANCAMENTOS);
+                    lancamentos = rawL ? JSON.parse(rawL) : [];
+                } catch (e) { lancamentos = []; }
+
+                try {
+                    const rawR = localStorage.getItem(STORAGE_RESERVAS);
+                    reservas = rawR ? JSON.parse(rawR) : [];
+                } catch (e) { reservas = []; }
+
+                try {
+                    const rawC = localStorage.getItem(STORAGE_CATEGORIAS);
+                    categorias = rawC ? JSON.parse(rawC) : ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer',
+                        'Saúde', 'Educação'
+                    ];
+                } catch (e) {
+                    categorias = ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'];
+                }
+
+                try {
+                    const rawLc = localStorage.getItem(STORAGE_LIMITE_CREDITO);
+                    limiteCredito = rawLc ? parseFloat(rawLc) : 0;
+                } catch (e) { limiteCredito = 0; }
+            }
+
+            function salvarLancamentosLocal() {
+                localStorage.setItem(STORAGE_LANCAMENTOS, JSON.stringify(lancamentos));
+            }
+
+            function salvarReservasLocal() {
+                localStorage.setItem(STORAGE_RESERVAS, JSON.stringify(reservas));
+            }
+
+            function salvarCategoriasLocal() {
+                localStorage.setItem(STORAGE_CATEGORIAS, JSON.stringify(categorias));
+            }
+
+            function salvarLimiteCreditoLocal() {
+                localStorage.setItem(STORAGE_LIMITE_CREDITO, JSON.stringify(limiteCredito));
+            }
+
+            function salvarTudoLocal() {
+                salvarLancamentosLocal();
+                salvarReservasLocal();
+                salvarCategoriasLocal();
+                salvarLimiteCreditoLocal();
+            }
+
+            // ---------- FUNÇÕES DO FIREBASE ----------
+            async function carregarDoFirebase() {
+                if (!currentUser) return;
+
+                try {
+                    syncSpinner.classList.add('active');
+                    syncStatus.textContent = 'Sincronizando...';
+
+                    // Buscar lançamentos
+                    const lSnapshot = await db.collection('users')
+                        .doc(currentUser.uid)
+                        .collection('lancamentos')
+                        .orderBy('data', 'desc')
+                        .get();
+
+                    if (!lSnapshot.empty) {
+                        lancamentos = lSnapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }));
+                    }
+
+                    // Buscar reservas
+                    const rSnapshot = await db.collection('users')
+                        .doc(currentUser.uid)
+                        .collection('reservas')
+                        .orderBy('data', 'desc')
+                        .get();
+
+                    if (!rSnapshot.empty) {
+                        reservas = rSnapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }));
+                    }
+
+                    // Buscar categorias
+                    const cDoc = await db.collection('users')
+                        .doc(currentUser.uid)
+                        .collection('config')
+                        .doc('categorias')
+                        .get();
+
+                    if (cDoc.exists && cDoc.data().lista) {
+                        categorias = cDoc.data().lista;
+                    }
+
+                    // Buscar limite de crédito
+                    const lcDoc = await db.collection('users')
+                        .doc(currentUser.uid)
+                        .collection('config')
+                        .doc('limite_credito')
+                        .get();
+
+                    if (lcDoc.exists) {
+                        limiteCredito = lcDoc.data().valor || 0;
+                    }
+
+                    // Salvar localmente
+                    salvarTudoLocal();
+
+                    syncStatus.textContent = 'Sincronizado ☁️';
+                    syncSpinner.classList.remove('active');
+
+                    // Atualizar interface
+                    renderTudo();
+                } catch (error) {
+                    console.error('Erro ao carregar do Firebase:', error);
+                    syncStatus.textContent = 'Erro na sincronização';
+                    syncSpinner.classList.remove('active');
+                    // Fallback para dados locais
+                    carregarDadosLocal();
+                    renderTudo();
+                }
+            }
+
+            async function salvarNoFirebase() {
+                if (!currentUser) return;
+
+                try {
+                    syncSpinner.classList.add('active');
+                    syncStatus.textContent = 'Salvando...';
+
+                    const userRef = db.collection('users').doc(currentUser.uid);
+
+                    // Salvar lançamentos (substituir todos)
+                    const lCollection = userRef.collection('lancamentos');
+                    const lSnapshot = await lCollection.get();
+                    const batch = db.batch();
+
+                    lSnapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+
+                    lancamentos.forEach(l => {
+                        const docRef = lCollection.doc(l.id || Date.now().toString());
+                        batch.set(docRef, l);
+                    });
+
+                    // Salvar reservas
+                    const rCollection = userRef.collection('reservas');
+                    const rSnapshot = await rCollection.get();
+                    rSnapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+
+                    reservas.forEach(r => {
+                        const docRef = rCollection.doc(r.id || Date.now().toString());
+                        batch.set(docRef, r);
+                    });
+
+                    // Salvar categorias
+                    const cRef = userRef.collection('config').doc('categorias');
+                    batch.set(cRef, { lista: categorias });
+
+                    // Salvar limite de crédito
+                    const lcRef = userRef.collection('config').doc('limite_credito');
+                    batch.set(lcRef, { valor: limiteCredito });
+
+                    await batch.commit();
+
+                    syncStatus.textContent = 'Sincronizado ☁️';
+                    syncSpinner.classList.remove('active');
+                } catch (error) {
+                    console.error('Erro ao salvar no Firebase:', error);
+                    syncStatus.textContent = 'Erro ao salvar';
+                    syncSpinner.classList.remove('active');
+                    alert('Erro ao sincronizar com o servidor. Verifique sua conexão.');
+                }
+            }
+
+            async function sincronizar() {
+                if (!currentUser) {
+                    alert('Faça login para sincronizar seus dados.');
+                    return;
+                }
+
+                if (isSyncing) return;
+                isSyncing = true;
+
+                try {
+                    await carregarDoFirebase();
+                    await salvarNoFirebase();
+                } catch (error) {
+                    console.error('Erro na sincronização:', error);
+                } finally {
+                    isSyncing = false;
+                }
+            }
+
+            // ---------- AUTENTICAÇÃO ----------
+            function atualizarStatusAuth(user) {
+                currentUser = user;
+                if (user) {
+                    statusDot.className = 'dot online';
+                    statusText.textContent = user.displayName || user.email || 'Online';
+                    btnAuth.textContent = '🚪 Sair';
+                    btnAuth.className = 'btn-auth logout';
+                    localStorage.setItem(STORAGE_USER, JSON.stringify({
+                        uid: user.uid,
+                        displayName: user.displayName,
+                        email: user.email
+                    }));
+                    // Carregar dados do Firebase
+                    carregarDoFirebase();
+                } else {
+                    statusDot.className = 'dot offline';
+                    statusText.textContent = 'Offline';
+                    btnAuth.textContent = '🔑 Entrar com Google';
+                    btnAuth.className = 'btn-auth';
+                    localStorage.removeItem(STORAGE_USER);
+                    syncStatus.textContent = 'Local';
+                    // Carregar dados locais
+                    carregarDadosLocal();
+                    renderTudo();
+                }
+            }
+
+            function loginGoogle() {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                auth.signInWithPopup(provider)
+                    .then(result => {
+                        atualizarStatusAuth(result.user);
+                    })
+                    .catch(error => {
+                        console.error('Erro no login:', error);
+                        alert('Erro ao fazer login: ' + error.message);
+                    });
+            }
+
+            function logout() {
+                auth.signOut()
+                    .then(() => {
+                        atualizarStatusAuth(null);
+                    })
+                    .catch(error => {
+                        console.error('Erro ao sair:', error);
+                    });
+            }
+
+            // ---------- HELPERS ----------
+            function formatarMoeda(v) {
+                return 'R$ ' + v.toFixed(2).replace('.', ',');
+            }
+
+            function hoje() {
+                return new Date().toISOString().slice(0, 10);
+            }
+
+            function dataParaStr(d) {
+                const dt = new Date(d + 'T00:00:00');
+                return dt.toLocaleDateString('pt-BR');
+            }
+
+            function gerarParcelas(dataInicio, qtd) {
+                const datas = [];
+                const dt = new Date(dataInicio + 'T00:00:00');
+                for (let i = 0; i < qtd; i++) {
+                    const d = new Date(dt);
+                    d.setMonth(d.getMonth() + i);
+                    datas.push(d.toISOString().slice(0, 10));
+                }
+                return datas;
+            }
+
+            function getTipoLabel(tipo) {
+                const map = {
+                    'receita': 'Receita',
+                    'despesa': 'Despesa',
+                    'aumento_limite': '📈 Aumento de Limite',
+                    'fatura': '💳 Fatura'
+                };
+                return map[tipo] || tipo;
+            }
+
+            function getTipoBadge(tipo) {
+                const map = {
+                    'receita': 'badge-receita',
+                    'despesa': 'badge-despesa',
+                    'aumento_limite': 'badge-aumento',
+                    'fatura': 'badge-fatura'
+                };
+                return map[tipo] || 'badge-despesa';
+            }
+
+            // ---------- RENDER: CATEGORIAS ----------
+            function renderCategorias() {
+                categoriaTags.innerHTML = '';
+                categorias.forEach((cat, idx) => {
+                    const tag = document.createElement('span');
+                    tag.className = 'categoria-tag';
+                    tag.innerHTML = `${cat} <span class="remove-cat" data-idx="${idx}">×</span>`;
+                    categoriaTags.appendChild(tag);
+                });
+
+                const selects = [categoriaLanc, filtroCategoria];
+                selects.forEach(sel => {
+                    const currentVal = sel.value;
+                    sel.innerHTML = '<option value="">Selecione...</option>';
+                    categorias.forEach(cat => {
+                        const opt = document.createElement('option');
+                        opt.value = cat;
+                        opt.textContent = cat;
+                        sel.appendChild(opt);
+                    });
+                    if (currentVal && categorias.includes(currentVal)) {
+                        sel.value = currentVal;
+                    }
+                    if (sel === filtroCategoria) {
+                        const optAll = document.createElement('option');
+                        optAll.value = 'todas';
+                        optAll.textContent = 'Todas categorias';
+                        sel.prepend(optAll);
+                        if (!currentVal || currentVal === 'todas') {
+                            sel.value = 'todas';
+                        }
+                    }
+                });
+
+                document.querySelectorAll('.remove-cat').forEach(el => {
+                    el.addEventListener('click', function() {
+                        const idx = parseInt(this.dataset.idx);
+                        if (!isNaN(idx) && idx >= 0 && idx < categorias.length) {
+                            const emUso = lancamentos.some(l => l.categoria === categorias[idx]);
+                            if (emUso) {
+                                alert('Esta categoria está em uso em lançamentos. Remova os lançamentos primeiro ou edite-os.');
+                                return;
+                            }
+                            categorias.splice(idx, 1);
+                            salvarCategoriasLocal();
+                            renderCategorias();
+                            if (currentUser) salvarNoFirebase();
+                        }
+                    });
+                });
+            }
+
+            // ---------- RENDER: TUDO ----------
+            function renderTudo() {
+                renderCategorias();
+                renderInicio();
+                renderTabela();
+                renderReservas();
+            }
+
+            // ---------- RENDER: INÍCIO ----------
+            function renderInicio() {
+                const totalReceitas = lancamentos
+                    .filter(l => l.tipo === 'receita')
+                    .reduce((s, l) => s + l.valor, 0);
+                const totalDespesas = lancamentos
+                    .filter(l => l.tipo === 'despesa')
+                    .reduce((s, l) => s + l.valor, 0);
+                const saldo = totalReceitas - totalDespesas;
+                saldoEl.textContent = formatarMoeda(saldo);
+                saldoEl.className = 'card-value ' + (saldo >= 0 ? 'positive' : 'negative');
+
+                const aumentos = lancamentos
+                    .filter(l => l.tipo === 'aumento_limite')
+                    .reduce((s, l) => s + l.valor, 0);
+                const faturas = lancamentos
+                    .filter(l => l.tipo === 'fatura')
+                    .reduce((s, l) => s + l.valor, 0);
+
+                const limiteAtual = limiteCredito + aumentos;
+                const utilizado = faturas;
+                const credito = Math.max(0, limiteAtual - utilizado);
+                creditoEl.textContent = formatarMoeda(credito);
+                creditoEl.className = 'card-value ' + (credito > 0 ? 'positive' : credito === 0 ? 'neutral' : 'negative');
+
+                const totalRes = reservas.reduce((s, r) => s + r.valor, 0);
+                totalReservasEl.textContent = formatarMoeda(totalRes);
+
+                const hojeStr = hoje();
+                const limiteVenc = new Date();
+                limiteVenc.setDate(limiteVenc.getDate() + 7);
+                const limiteStr = limiteVenc.toISOString().slice(0, 10);
+
+                const proximas = lancamentos
+                    .filter(l => l.tipo === 'despesa' && l.parcelas && l.parcelas.length > 0)
+                    .flatMap(l => l.parcelas.map((p, idx) => ({
+                        desc: l.descricao + (l.parcelas.length > 1 ? ` (${idx+1}/${l.parcelas.length})` : ''),
+                        data: p,
+                        valor: l.valor / l.parcelas.length
+                    })))
+                    .filter(item => item.data >= hojeStr && item.data <= limiteStr)
+                    .sort((a, b) => a.data.localeCompare(b.data));
+
+                vencerList.innerHTML = '';
+                if (proximas.length === 0) {
+                    vencerList.innerHTML = '<div class="empty-message">Nenhuma conta próxima do vencimento.</div>';
+                } else {
+                    proximas.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'vencer-item';
+                        div.innerHTML = `
+                                <span class="desc">${item.desc}</span>
+                                <span class="date">📅 ${dataParaStr(item.data)}</span>
+                                <span class="value">${formatarMoeda(item.valor)}</span>
+                            `;
+                        vencerList.appendChild(div);
+                    });
+                }
+            }
+
+            // ---------- RENDER: TABELA LANÇAMENTOS ----------
+            function renderTabela() {
+                const tipoFiltro = filtroTipo.value;
+                const mesFiltro = filtroMes.value;
+                const catFiltro = filtroCategoria.value;
+
+                let filtrados = [...lancamentos];
+
+                if (tipoFiltro !== 'todos') {
+                    filtrados = filtrados.filter(l => l.tipo === tipoFiltro);
+                }
+
+                if (catFiltro !== 'todas' && catFiltro) {
+                    filtrados = filtrados.filter(l => l.categoria === catFiltro);
+                }
+
+                if (mesFiltro) {
+                    const [ano, mes] = mesFiltro.split('-').map(Number);
+                    filtrados = filtrados.filter(l => {
+                        const d = new Date(l.data + 'T00:00:00');
+                        return d.getFullYear() === ano && (d.getMonth() + 1) === mes;
+                    });
+                }
+
+                filtrados.sort((a, b) => b.data.localeCompare(a.data));
+
+                tabelaBody.innerHTML = '';
+                if (filtrados.length === 0) {
+                    tabelaBody.innerHTML =
+                        '<tr><td colspan="7" style="text-align:center; color:var(--text-light);">Nenhum lançamento encontrado.</td></tr>';
+                    return;
+                }
+
+                filtrados.forEach((l, idx) => {
+                    const tr = document.createElement('tr');
+                    const totalParcelas = l.parcelas ? l.parcelas.length : 1;
+                    const valorParcela = l.valor / totalParcelas;
+
+                    const tipoLabel = getTipoLabel(l.tipo);
+                    const badgeClass = getTipoBadge(l.tipo);
+
+                    tr.innerHTML = `
+                            <td>${dataParaStr(l.data)}</td>
+                            <td>${l.descricao}</td>
+                            <td><span class="badge ${badgeClass}">${tipoLabel}</span></td>
+                            <td>${l.categoria || '-'}</td>
+                            <td class="${l.tipo === 'receita' ? 'text-success' : l.tipo === 'aumento_limite' ? 'text-info' : l.tipo === 'fatura' ? 'text-warning' : 'text-danger'} fw-bold">${formatarMoeda(l.valor)}</td>
+                            <td>${totalParcelas}x ${formatarMoeda(valorParcela)}</td>
+                            <td><button class="btn btn-danger btn-sm" data-idx="${idx}">🗑️</button></td>
+                        `;
+                    tabelaBody.appendChild(tr);
+
+                    tr.querySelector('button').addEventListener('click', function() {
+                        const realIdx = lancamentos.indexOf(l);
+                        if (realIdx !== -1) {
+                            lancamentos.splice(realIdx, 1);
+                            salvarLancamentosLocal();
+                            renderTabela();
+                            renderInicio();
+                            if (currentUser) salvarNoFirebase();
+                        }
+                    });
+                });
+            }
+
+            // ---------- RENDER: RESERVAS ----------
+            function renderReservas() {
+                reservasGrid.innerHTML = '';
+                if (reservas.length === 0) {
+                    reservasGrid.innerHTML =
+                        '<div class="empty-message" style="grid-column:1/-1;">Nenhuma reserva cadastrada.</div>';
+                    return;
+                }
+
+                const sorted = [...reservas].sort((a, b) => b.data.localeCompare(a.data));
+
+                sorted.forEach(r => {
+                    const div = document.createElement('div');
+                    div.className = 'reserva-card';
+                    div.innerHTML = `
+                            <div class="name">${r.nome}</div>
+                            <div class="value">${formatarMoeda(r.valor)}</div>
+                            <div class="date">📅 ${dataParaStr(r.data)}</div>
+                        `;
+                    reservasGrid.appendChild(div);
+                });
+
+                desenharGrafico();
+            }
+
+            // ---------- GRÁFICO ----------
+            function desenharGrafico() {
+                const sorted = [...reservas].sort((a, b) => a.data.localeCompare(b.data));
+                const labels = sorted.map(r => dataParaStr(r.data) + ' - ' + r.nome);
+                const valores = sorted.map(r => r.valor);
+
+                const rect = canvas.parentElement.getBoundingClientRect();
+                const w = rect.width || 600;
+                const h = 260;
+                canvas.width = w * 2;
+                canvas.height = h * 2;
+                canvas.style.width = w + 'px';
+                canvas.style.height = h + 'px';
+                ctx.scale(2, 2);
+
+                const padding = { top: 20, bottom: 40, left: 50, right: 20 };
+                const chartW = w - padding.left - padding.right;
+                const chartH = h - padding.top - padding.bottom;
+
+                const maxVal = Math.max(...valores, 100);
+                const minVal = Math.min(...valores, 0);
+
+                ctx.clearRect(0, 0, w, h);
+
+                const isDark = document.body.classList.contains('dark-mode');
+                ctx.fillStyle = isDark ? '#2d2d44' : '#fafbfc';
+                ctx.fillRect(0, 0, w, h);
+
+                ctx.fillStyle = isDark ? '#adb5bd' : '#495057';
+                ctx.font = '12px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Evolução das reservas (R$)', w / 2, 14);
+
+                ctx.strokeStyle = isDark ? '#4d4d6e' : '#dee2e6';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, padding.top);
+                ctx.lineTo(padding.left, padding.top + chartH);
+                ctx.lineTo(padding.left + chartW, padding.top + chartH);
+                ctx.stroke();
+
+                const steps = 5;
+                for (let i = 0; i <= steps; i++) {
+                    const y = padding.top + chartH - (i / steps) * chartH;
+                    const val = minVal + (i / steps) * (maxVal - minVal);
+                    ctx.fillStyle = isDark ? '#868e96' : '#868e96';
+                    ctx.font = '10px sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.fillText('R$' + val.toFixed(0), padding.left - 6, y + 4);
+                    ctx.strokeStyle = isDark ? '#3d3d5c' : '#edf2f7';
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(padding.left, y);
+                    ctx.lineTo(padding.left + chartW, y);
+                    ctx.stroke();
+                }
+
+                if (valores.length === 0) {
+                    ctx.fillStyle = isDark ? '#868e96' : '#adb5bd';
+                    ctx.font = '14px "Segoe UI", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Sem dados para exibir', w / 2, h / 2);
+                    return;
+                }
+
+                if (valores.length < 2) {
+                    const x = padding.left + chartW / 2;
+                    const y = padding.top + chartH - ((valores[0] - minVal) / (maxVal - minVal)) * chartH;
+                    ctx.fillStyle = '#2ecc71';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 6, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.fillStyle = isDark ? '#e9ecef' : '#1a1a2e';
+                    ctx.font = '11px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(formatarMoeda(valores[0]), x, y - 12);
+                    return;
+                }
+
+                ctx.strokeStyle = '#2ecc71';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+
+                for (let i = 0; i < valores.length; i++) {
+                    const x = padding.left + (i / (valores.length - 1)) * chartW;
+                    const y = padding.top + chartH - ((valores[i] - minVal) / (maxVal - minVal)) * chartH;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+
+                for (let i = 0; i < valores.length; i++) {
+                    const x = padding.left + (i / (valores.length - 1)) * chartW;
+                    const y = padding.top + chartH - ((valores[i] - minVal) / (maxVal - minVal)) * chartH;
+                    ctx.fillStyle = '#2ecc71';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.fillStyle = isDark ? '#e9ecef' : '#1a1a2e';
+                    ctx.font = '9px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('R$' + valores[i].toFixed(0), x, y - 10);
+                }
+
+                const stepLabel = Math.max(1, Math.floor(valores.length / 6));
+                ctx.fillStyle = isDark ? '#868e96' : '#868e96';
+                ctx.font = '9px sans-serif';
+                ctx.textAlign = 'center';
+                for (let i = 0; i < valores.length; i += stepLabel) {
+                    const x = padding.left + (i / (valores.length - 1)) * chartW;
+                    const label = labels[i] || '';
+                    ctx.fillText(label.slice(0, 12), x, padding.top + chartH + 16);
+                }
+            }
+
+            // ---------- ADICIONAR LANÇAMENTO ----------
+            function adicionarLancamento() {
+                const tipo = tipoLanc.value;
+                const categoria = categoriaLanc.value;
+                const desc = descLanc.value.trim();
+                const valor = parseFloat(valorLanc.value);
+                const data = dataLanc.value;
+                const parcelas = parseInt(parcelasLanc.value) || 1;
+
+                if (!desc) { alert('Informe uma descrição.'); return; }
+                if (isNaN(valor) || valor <= 0) { alert('Informe um valor válido.'); return; }
+                if (!data) { alert('Informe a data.'); return; }
+
+                if (tipo === 'fatura' && parcelas > 1) {
+                    if (!confirm('Faturas geralmente não são parceladas. Deseja continuar com ' + parcelas +
+                            ' parcelas?')) {
+                        return;
+                    }
+                }
+
+                const parcelasDatas = gerarParcelas(data, parcelas);
+
+                lancamentos.push({
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+                    tipo: tipo,
+                    categoria: categoria || 'Sem categoria',
+                    descricao: desc,
+                    valor: valor,
+                    data: data,
+                    parcelas: parcelasDatas,
+                    criadoEm: new Date().toISOString()
+                });
+
+                if (tipo === 'aumento_limite') {
+                    limiteCredito += valor;
+                    salvarLimiteCreditoLocal();
+                }
+
+                salvarLancamentosLocal();
+
+                descLanc.value = '';
+                valorLanc.value = '';
+                dataLanc.value = '';
+                parcelasLanc.value = '1';
+                tipoLanc.value = 'receita';
+
+                renderTudo();
+                if (currentUser) salvarNoFirebase();
+            }
+
+            // ---------- ADICIONAR RESERVA ----------
+            function adicionarReserva() {
+                const nome = nomeReserva.value.trim();
+                const valor = parseFloat(valorReserva.value);
+                const data = dataReserva.value;
+
+                if (!nome) { alert('Informe o nome da reserva.'); return; }
+                if (isNaN(valor) || valor <= 0) { alert('Informe um valor válido.'); return; }
+                if (!data) { alert('Informe a data.'); return; }
+
+                reservas.push({
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+                    nome: nome,
+                    valor: valor,
+                    data: data,
+                    criadoEm: new Date().toISOString()
+                });
+
+                salvarReservasLocal();
+
+                nomeReserva.value = '';
+                valorReserva.value = '';
+                dataReserva.value = '';
+
+                renderTudo();
+                if (currentUser) salvarNoFirebase();
+            }
+
+            // ---------- ADICIONAR CATEGORIA ----------
+            function adicionarCategoria() {
+                const nome = novaCategoriaInput.value.trim();
+                if (!nome) { alert('Digite um nome para a categoria.'); return; }
+                if (categorias.includes(nome)) { alert('Esta categoria já existe.'); return; }
+
+                categorias.push(nome);
+                salvarCategoriasLocal();
+                novaCategoriaInput.value = '';
+                renderTudo();
+                if (currentUser) salvarNoFirebase();
+            }
+
+            // ---------- EXPORTAR CSV ----------
+            function exportarCSV() {
+                if (lancamentos.length === 0) {
+                    alert('Nenhum lançamento para exportar.');
+                    return;
+                }
+
+                const headers = ['Data', 'Descrição', 'Tipo', 'Categoria', 'Valor', 'Parcelas'];
+                const rows = lancamentos.map(l => {
+                    const totalParcelas = l.parcelas ? l.parcelas.length : 1;
+                    const parcelasStr = l.parcelas ? l.parcelas.join('|') : '';
+                    return [
+                        l.data,
+                        l.descricao,
+                        l.tipo,
+                        l.categoria || '',
+                        l.valor,
+                        parcelasStr
+                    ];
+                });
+
+                const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+
+                const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `lancamentos_${hoje()}.csv`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+            }
+
+            // ---------- IMPORTAR CSV ----------
+            function importarCSV() {
+                const file = fileInput.files[0];
+                if (!file) {
+                    alert('Selecione um arquivo CSV.');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const text = e.target.result;
+                        const lines = text.split('\n').filter(line => line.trim());
+
+                        if (lines.length < 2) {
+                            alert('Arquivo vazio ou formato inválido.');
+                            return;
+                        }
+
+                        const dataLines = lines.slice(1);
+                        let importados = 0;
+
+                        dataLines.forEach(line => {
+                            const cols = line.split(',').map(c => c.trim());
+                            if (cols.length < 6) return;
+
+                            const [data, descricao, tipo, categoria, valorStr, parcelasStr] = cols;
+
+                            if (!data || !descricao || !tipo || !valorStr) return;
+
+                            const valor = parseFloat(valorStr);
+                            if (isNaN(valor) || valor <= 0) return;
+
+                            const parcelas = parcelasStr ? parcelasStr.split('|') : [data];
+
+                            lancamentos.push({
+                                id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+                                tipo: tipo,
+                                categoria: categoria || 'Sem categoria',
+                                descricao: descricao,
+                                valor: valor,
+                                data: data,
+                                parcelas: parcelas,
+                                criadoEm: new Date().toISOString()
+                            });
+
+                            importados++;
+                        });
+
+                        salvarLancamentosLocal();
+                        fileInput.value = '';
+                        renderTudo();
+                        if (currentUser) salvarNoFirebase();
+                        alert(`✅ ${importados} lançamentos importados com sucesso!`);
+                    } catch (err) {
+                        alert('Erro ao importar arquivo. Verifique o formato.');
+                        console.error(err);
+                    }
+                };
+                reader.readAsText(file, 'UTF-8');
+            }
+
+            // ---------- BACKUP LOCAL ----------
+            function fazerBackupLocal() {
+                const backup = {
+                    lancamentos: lancamentos,
+                    reservas: reservas,
+                    categorias: categorias,
+                    limiteCredito: limiteCredito,
+                    dataBackup: new Date().toISOString()
+                };
+
+                const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `backup_imperio_${hoje()}.json`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+                alert('✅ Backup local criado com sucesso!');
+            }
+
+            // ---------- DARK MODE ----------
+            function toggleDarkMode() {
+                document.body.classList.toggle('dark-mode');
+                const isDark = document.body.classList.contains('dark-mode');
+                btnDarkMode.textContent = isDark ? '☀️' : '🌙';
+                localStorage.setItem(STORAGE_DARKMODE, isDark);
+                setTimeout(desenharGrafico, 100);
+            }
+
+            // ---------- TABS ----------
+            function initTabs() {
+                const btns = document.querySelectorAll('.tab-btn');
+                const contents = document.querySelectorAll('.tab-content');
+
+                btns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        btns.forEach(b => b.classList.remove('active'));
+                        contents.forEach(c => c.classList.remove('active'));
+                        this.classList.add('active');
+                        document.getElementById(this.dataset.tab).classList.add('active');
+
+                        if (this.dataset.tab === 'tab3') {
+                            setTimeout(desenharGrafico, 100);
+                        }
+                    });
+                });
+            }
+
+            // ---------- EVENTOS ----------
+            btnAdd.addEventListener('click', adicionarLancamento);
+            btnAddReserva.addEventListener('click', adicionarReserva);
+            btnAddCategoria.addEventListener('click', adicionarCategoria);
+            btnExportarCSV.addEventListener('click', exportarCSV);
+            btnImportarCSV.addEventListener('click', importarCSV);
+            btnDarkMode.addEventListener('click', toggleDarkMode);
+            btnAuth.addEventListener('click', function() {
+                if (currentUser) {
+                    logout();
+                } else {
+                    loginGoogle();
+                }
+            });
+            btnSyncNow.addEventListener('click', sincronizar);
+            btnBackupLocal.addEventListener('click', fazerBackupLocal);
+
+            novaCategoriaInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') adicionarCategoria();
+            });
+
+            valorReserva.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') adicionarReserva();
+            });
+
+            valorLanc.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') adicionarLancamento();
+            });
+
+            filtroTipo.addEventListener('change', renderTabela);
+            filtroMes.addEventListener('change', renderTabela);
+            filtroCategoria.addEventListener('change', renderTabela);
+
+            document.getElementById('btnLimparFiltros').addEventListener('click', function() {
+                filtroTipo.value = 'todos';
+                filtroMes.value = '';
+                filtroCategoria.value = 'todas';
+                renderTabela();
+            });
+
+            // ---------- AUTH STATE ----------
+            auth.onAuthStateChanged(function(user) {
+                if (user) {
+                    atualizarStatusAuth(user);
+                } else {
+                    // Verificar se há usuário salvo
+                    const savedUser = localStorage.getItem(STORAGE_USER);
+                    if (savedUser) {
+                        try {
+                            const userData = JSON.parse(savedUser);
+                            // Tentar login automático (apenas para exibir nome)
+                            statusDot.className = 'dot offline';
+                            statusText.textContent = userData.displayName || userData.email || 'Offline';
+                            btnAuth.textContent = '🚪 Sair';
+                            btnAuth.className = 'btn-auth logout';
+                            // Tentar reconectar
+                            auth.signInWithCustomToken(userData.uid).catch(() => {});
+                        } catch (e) {}
+                    }
+                    atualizarStatusAuth(null);
+                }
+            });
+
+            // ---------- INICIALIZAÇÃO ----------
+            function init() {
+                document.getElementById('headerDate').textContent =
+                    new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long',
+                        year: 'numeric' });
+
+                // Dark mode
+                const dark = localStorage.getItem(STORAGE_DARKMODE);
+                if (dark === 'true') {
+                    document.body.classList.add('dark-mode');
+                    btnDarkMode.textContent = '☀️';
+                }
+
+                // Carregar dados locais primeiro
+                carregarDadosLocal();
+
+                // Verificar se há usuário salvo
+                const savedUser = localStorage.getItem(STORAGE_USER);
+                if (savedUser) {
+                    try {
+                        const userData = JSON.parse(savedUser);
+                        statusDot.className = 'dot offline';
+                        statusText.textContent = userData.displayName || userData.email || 'Offline';
+                        btnAuth.textContent = '🚪 Sair';
+                        btnAuth.className = 'btn-auth logout';
+                    } catch (e) {}
+                }
+
+                initTabs();
+                renderTudo();
+
+                setTimeout(desenharGrafico, 300);
+
+                let resizeTimer;
+                window.addEventListener('resize', function() {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(desenharGrafico, 200);
+                });
+
+                // Sincronizar automaticamente após carregar
+                setTimeout(() => {
+                    if (currentUser) {
+                        sincronizar();
+                    }
+                }, 1000);
+            }
+
+            init();
+
+            // Expor funções para debug
+            window._debug = {
+                lancamentos: () => lancamentos,
+                reservas: () => reservas,
+                categorias: () => categorias,
+                user: () => currentUser,
+                sync: sincronizar,
+                backup: fazerBackupLocal
+            };
+
+        })();
+    </script>
+
+</body>
+</html>
