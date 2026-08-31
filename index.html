@@ -932,7 +932,7 @@
         }
 
         /* ============================
-                   FORMULÁRIO (ABA CONTROLE) - mantido
+                   FORMULÁRIO (ABA CONTROLE)
                 ============================ */
         .form-row {
             display: grid;
@@ -1837,12 +1837,12 @@
                 <div class="card">
                     <div class="card-label">💰 Saldo disponível</div>
                     <div class="card-value positive" id="saldoDisponivel">R$ 0,00</div>
-                    <div class="card-sub">Receitas - Despesas - Faturas</div>
+                    <div class="card-sub">Receitas - Despesas - Faturas (parcelas não pagas)</div>
                 </div>
                 <div class="card">
                     <div class="card-label">💳 Crédito disponível</div>
                     <div class="card-value neutral" id="creditoDisponivel">R$ 0,00</div>
-                    <div class="card-sub">Limite - Faturas</div>
+                    <div class="card-sub">Limite - Faturas (parcelas não pagas)</div>
                 </div>
                 <div class="card">
                     <div class="card-label">🏦 Reserva financeira</div>
@@ -2103,9 +2103,7 @@
             </div>
         </div>
 
-        <!-- ============================
-        ABA 5 – CALENDÁRIO
-        ============================ -->
+        <!-- ABA 5 – CALENDÁRIO -->
         <div class="tab-content" id="tab5">
             <h3 style="margin-bottom:16px; color:var(--text-primary);">📅 Calendário de Pagamentos</h3>
             <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">Visualize suas contas e recebimentos organizados por dia.</p>
@@ -2133,9 +2131,7 @@
             </div>
         </div>
 
-        <!-- ============================
-        ABA 6 – METAS
-        ============================ -->
+        <!-- ABA 6 – METAS -->
         <div class="tab-content" id="tab6">
             <h3 style="margin-bottom:6px; color:var(--text-primary);">🎯 Metas Financeiras</h3>
             <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">Defina metas e acompanhe seu progresso.</p>
@@ -2254,15 +2250,16 @@
 
     <script>
         // ============================================================
-        //  CONFIGURAÇÃO DO FIREBASE
+        //  CONFIGURAÇÃO DO FIREBASE (ATUALIZADA)
         // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyB6eWS-N2hacE2Uyn5gCwf6m1P169T_y_4",
             authDomain: "controle-financeiro-60807.firebaseapp.com",
+            databaseURL: "https://controle-financeiro-60807-default-rtdb.firebaseio.com",
             projectId: "controle-financeiro-60807",
             storageBucket: "controle-financeiro-60807.firebasestorage.app",
             messagingSenderId: "1002617004174",
-            appId: "1:1002617004174:web:d3c55c61dd5ca19b2d29df"
+            appId: "1:1002617004174:web:d7117f43185524732d29df"
         };
 
         // Inicializar Firebase
@@ -2271,418 +2268,662 @@
         const db = firebase.firestore();
 
         // ============================================================
-        //  SISTEMA COMPLETO
+        //  SISTEMA DE AUTENTICAÇÃO (APENAS USUÁRIO E SENHA)
         // ============================================================
 
-        (function() {
-            'use strict';
+        // Elementos de autenticação
+        const authContainer = document.getElementById('authContainer');
+        const appContainer = document.getElementById('appContainer');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const authError = document.getElementById('authError');
+        const authSuccess = document.getElementById('authSuccess');
 
-            // ---------- CHAVES DO localStorage ----------
-            const STORAGE_LANCAMENTOS = 'imperio_lancamentos';
-            const STORAGE_RESERVAS = 'imperio_reservas';
-            const STORAGE_CATEGORIAS = 'imperio_categorias';
-            const STORAGE_DARKMODE = 'imperio_darkmode';
-            const STORAGE_LIMITE_CREDITO = 'imperio_limite_credito';
-            const STORAGE_METAS = 'imperio_metas';
+        const loginUsername = document.getElementById('loginUsername');
+        const loginPassword = document.getElementById('loginPassword');
+        const btnLogin = document.getElementById('btnLogin');
 
-            // ---------- ELEMENTOS DOM ----------
-            // ... (mantido o mesmo da versão anterior)
+        const registerUsername = document.getElementById('registerUsername');
+        const registerPassword = document.getElementById('registerPassword');
+        const registerConfirmPassword = document.getElementById('registerConfirmPassword');
+        const btnRegister = document.getElementById('btnRegister');
 
-            // ---------- DADOS ----------
-            let lancamentos = [];
-            let reservas = [];
-            let categorias = [];
-            let metas = [];
-            let limiteCredito = 0;
-            let currentUser = null;
-            let isSyncing = false;
+        const showRegister = document.getElementById('showRegister');
+        const showLogin = document.getElementById('showLogin');
 
-            // ---------- CONFIGURAÇÃO DE MOEDAS ----------
-            const MOEDAS = {
-                BRL: { simbolo: 'R$', nome: 'Real', taxa: 1 },
-                USD: { simbolo: '$', nome: 'Dólar', taxa: 5.7 },
-                EUR: { simbolo: '€', nome: 'Euro', taxa: 6.2 },
-                AUD: { simbolo: 'AU$', nome: 'Dólar Australiano', taxa: 3.75 }
-            };
+        const btnLogout = document.getElementById('btnLogout');
+        const userAvatar = document.getElementById('userAvatar');
+        const userNameDisplay = document.getElementById('userNameDisplay');
+        const syncDot = document.getElementById('syncDot');
+        const syncText = document.getElementById('syncText');
 
-            const MOEDA_PADRAO = 'BRL';
+        const loadingAuth = document.getElementById('loadingAuth');
 
-            // ---------- FUNÇÕES DE CARGA/SALVO ----------
-            function carregarDadosLocal() {
-                try {
-                    const rawL = localStorage.getItem(STORAGE_LANCAMENTOS);
-                    lancamentos = rawL ? JSON.parse(rawL) : [];
-                } catch (e) { lancamentos = []; }
+        // ---------- FUNÇÕES DE AUTENTICAÇÃO ----------
+        function showError(msg) {
+            authError.textContent = msg;
+            authError.classList.add('show');
+            authSuccess.classList.remove('show');
+            setTimeout(() => authError.classList.remove('show'), 5000);
+        }
 
-                try {
-                    const rawR = localStorage.getItem(STORAGE_RESERVAS);
-                    reservas = rawR ? JSON.parse(rawR) : [];
-                } catch (e) { reservas = []; }
+        function showSuccess(msg) {
+            authSuccess.textContent = msg;
+            authSuccess.classList.add('show');
+            authError.classList.remove('show');
+            setTimeout(() => authSuccess.classList.remove('show'), 3000);
+        }
 
-                try {
-                    const rawC = localStorage.getItem(STORAGE_CATEGORIAS);
-                    categorias = rawC ? JSON.parse(rawC) : ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer',
+        function setLoading(loading) {
+            loadingAuth.style.display = loading ? 'block' : 'none';
+            btnLogin.disabled = loading;
+            btnRegister.disabled = loading;
+        }
+
+        // ---------- FUNÇÃO PARA CRIAR USUÁRIO DEMO ----------
+        async function criarUsuarioDemo() {
+            const email = 'demo@imperio.finance';
+            const password = 'demo123';
+            const username = 'demo';
+
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                await db.collection('users').doc(userCredential.user.uid).set({
+                    username: username,
+                    displayName: 'demo',
+                    email: email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lancamentos: [],
+                    reservas: [],
+                    categorias: ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'],
+                    metas: [],
+                    limiteCredito: 0
+                });
+                console.log('✅ Usuário demo criado com sucesso!');
+            } catch (error) {
+                if (error.code === 'auth/email-already-in-use') {
+                    console.log('ℹ️ Usuário demo já existe.');
+                } else {
+                    console.error('❌ Erro ao criar usuário demo:', error);
+                }
+            }
+        }
+
+        // ---------- LOGIN ----------
+        async function doLogin() {
+            const username = loginUsername.value.trim();
+            const password = loginPassword.value.trim();
+
+            if (!username || !password) {
+                showError('Preencha usuário e senha.');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const email = username.toLowerCase() + '@imperio.finance';
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                
+                await db.collection('users').doc(userCredential.user.uid).update({
+                    username: username,
+                    displayName: username
+                }).catch(() => {});
+
+                showSuccess('Login realizado com sucesso!');
+                setTimeout(() => {
+                    entrarNoSistema(auth.currentUser);
+                }, 500);
+
+            } catch (error) {
+                setLoading(false);
+                let msg = 'Erro ao fazer login.';
+                if (error.code === 'auth/user-not-found') msg = 'Usuário não encontrado.';
+                else if (error.code === 'auth/wrong-password') msg = 'Senha incorreta.';
+                else if (error.code === 'auth/invalid-email') msg = 'Usuário inválido.';
+                else if (error.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Tente novamente mais tarde.';
+                showError(msg);
+                console.error(error);
+            }
+        }
+
+        // ---------- REGISTRO ----------
+        async function doRegister() {
+            const username = registerUsername.value.trim();
+            const password = registerPassword.value.trim();
+            const confirm = registerConfirmPassword.value.trim();
+
+            if (!username || !password || !confirm) {
+                showError('Preencha todos os campos.');
+                return;
+            }
+
+            if (username.length < 3) {
+                showError('Usuário deve ter pelo menos 3 caracteres.');
+                return;
+            }
+
+            if (password.length < 4) {
+                showError('Senha deve ter pelo menos 4 caracteres.');
+                return;
+            }
+
+            if (password !== confirm) {
+                showError('As senhas não coincidem.');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const email = username.toLowerCase() + '@imperio.finance';
+                
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                
+                await db.collection('users').doc(userCredential.user.uid).set({
+                    username: username,
+                    displayName: username,
+                    email: email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lancamentos: [],
+                    reservas: [],
+                    categorias: ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'],
+                    metas: [],
+                    limiteCredito: 0
+                });
+
+                setLoading(false);
+                showSuccess('✅ Conta criada com sucesso! Faça login.');
+                
+                await auth.signOut();
+                
+                setTimeout(() => {
+                    toggleForms('login');
+                    loginUsername.value = username;
+                    loginPassword.value = '';
+                }, 500);
+
+            } catch (error) {
+                setLoading(false);
+                let msg = 'Erro ao criar conta.';
+                if (error.code === 'auth/email-already-in-use') msg = 'Usuário já cadastrado.';
+                else if (error.code === 'auth/invalid-email') msg = 'Usuário inválido.';
+                else if (error.code === 'auth/weak-password') msg = 'Senha muito fraca. Use pelo menos 4 caracteres.';
+                showError(msg);
+                console.error(error);
+            }
+        }
+
+        // ---------- ENTRAR/SAIR DO SISTEMA ----------
+        function entrarNoSistema(user) {
+            authContainer.style.display = 'none';
+            appContainer.classList.add('active');
+
+            db.collection('users').doc(user.uid).get().then((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    const name = data.displayName || data.username || user.email || 'Usuário';
+                    const initial = name.charAt(0).toUpperCase();
+                    userAvatar.textContent = initial;
+                    userNameDisplay.textContent = name;
+                } else {
+                    const name = user.email || 'Usuário';
+                    const initial = name.charAt(0).toUpperCase();
+                    userAvatar.textContent = initial;
+                    userNameDisplay.textContent = name;
+                }
+            });
+
+            syncDot.className = 'dot online';
+            syncText.textContent = 'Sincronizado';
+
+            if (typeof inicializarSistema === 'function') {
+                inicializarSistema(user);
+            }
+        }
+
+        function sairDoSistema() {
+            auth.signOut().then(() => {
+                authContainer.style.display = 'block';
+                appContainer.classList.remove('active');
+                loginPassword.value = '';
+                registerUsername.value = '';
+                registerPassword.value = '';
+                registerConfirmPassword.value = '';
+                authError.classList.remove('show');
+                authSuccess.classList.remove('show');
+                syncDot.className = 'dot offline';
+                syncText.textContent = 'Offline';
+            });
+        }
+
+        // ---------- ALTERNAR FORMULÁRIOS ----------
+        function toggleForms(form) {
+            if (form === 'login') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                authError.classList.remove('show');
+                authSuccess.classList.remove('show');
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                authError.classList.remove('show');
+                authSuccess.classList.remove('show');
+            }
+        }
+
+        // ---------- EVENTOS ----------
+        btnLogin.addEventListener('click', doLogin);
+        loginPassword.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') doLogin();
+        });
+        loginUsername.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') loginPassword.focus();
+        });
+
+        btnRegister.addEventListener('click', doRegister);
+        registerConfirmPassword.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') doRegister();
+        });
+
+        showRegister.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleForms('register');
+        });
+
+        showLogin.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleForms('login');
+        });
+
+        btnLogout.addEventListener('click', function() {
+            if (confirm('Deseja realmente sair?')) {
+                sairDoSistema();
+            }
+        });
+
+        // ---------- INICIALIZAÇÃO ----------
+        setTimeout(criarUsuarioDemo, 1000);
+
+        auth.onAuthStateChanged(function(user) {
+            if (user) {
+                entrarNoSistema(user);
+            } else {
+                authContainer.style.display = 'block';
+                appContainer.classList.remove('active');
+                syncDot.className = 'dot offline';
+                syncText.textContent = 'Offline';
+            }
+        });
+
+        // ============================================================
+        //  SISTEMA FINANCEIRO
+        // ============================================================
+
+        // ---------- CHAVES DO localStorage ----------
+        const STORAGE_LANCAMENTOS = 'imperio_lancamentos';
+        const STORAGE_RESERVAS = 'imperio_reservas';
+        const STORAGE_CATEGORIAS = 'imperio_categorias';
+        const STORAGE_DARKMODE = 'imperio_darkmode';
+        const STORAGE_LIMITE_CREDITO = 'imperio_limite_credito';
+        const STORAGE_METAS = 'imperio_metas';
+
+        // ---------- DADOS ----------
+        let lancamentos = [];
+        let reservas = [];
+        let categorias = [];
+        let metas = [];
+        let limiteCredito = 0;
+        let currentUser = null;
+
+        // ---------- CONFIGURAÇÃO DE MOEDAS ----------
+        const MOEDAS = {
+            BRL: { simbolo: 'R$', nome: 'Real', taxa: 1 },
+            USD: { simbolo: '$', nome: 'Dólar', taxa: 5.7 },
+            EUR: { simbolo: '€', nome: 'Euro', taxa: 6.2 },
+            AUD: { simbolo: 'AU$', nome: 'Dólar Australiano', taxa: 3.75 }
+        };
+
+        const MOEDA_PADRAO = 'BRL';
+
+        // ---------- FUNÇÕES DE CARGA/SALVO ----------
+        function carregarDadosLocal() {
+            try {
+                const rawL = localStorage.getItem(STORAGE_LANCAMENTOS);
+                lancamentos = rawL ? JSON.parse(rawL) : [];
+            } catch (e) { lancamentos = []; }
+
+            try {
+                const rawR = localStorage.getItem(STORAGE_RESERVAS);
+                reservas = rawR ? JSON.parse(rawR) : [];
+            } catch (e) { reservas = []; }
+
+            try {
+                const rawC = localStorage.getItem(STORAGE_CATEGORIAS);
+                categorias = rawC ? JSON.parse(rawC) : ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer',
+                    'Saúde', 'Educação'
+                ];
+            } catch (e) {
+                categorias = ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'];
+            }
+
+            try {
+                const rawLc = localStorage.getItem(STORAGE_LIMITE_CREDITO);
+                limiteCredito = rawLc ? parseFloat(rawLc) : 0;
+            } catch (e) { limiteCredito = 0; }
+
+            try {
+                const rawM = localStorage.getItem(STORAGE_METAS);
+                metas = rawM ? JSON.parse(rawM) : [];
+            } catch (e) { metas = []; }
+
+            try {
+                const dark = localStorage.getItem(STORAGE_DARKMODE);
+                if (dark === 'true' && document.body) {
+                    document.body.classList.add('dark-mode');
+                    const btnDark = document.getElementById('btnDarkMode');
+                    if (btnDark) btnDark.textContent = '☀️';
+                }
+            } catch (e) {}
+
+            lancamentos = lancamentos.map(l => {
+                if (!l.moeda) l.moeda = MOEDA_PADRAO;
+                if (l.pago === undefined) l.pago = false;
+                if (!l.parcelasPagas) l.parcelasPagas = [];
+                return l;
+            });
+
+            reservas = reservas.map(r => {
+                if (!r.moeda) r.moeda = MOEDA_PADRAO;
+                return r;
+            });
+        }
+
+        function salvarLancamentosLocal() {
+            localStorage.setItem(STORAGE_LANCAMENTOS, JSON.stringify(lancamentos));
+        }
+
+        function salvarReservasLocal() {
+            localStorage.setItem(STORAGE_RESERVAS, JSON.stringify(reservas));
+        }
+
+        function salvarCategoriasLocal() {
+            localStorage.setItem(STORAGE_CATEGORIAS, JSON.stringify(categorias));
+        }
+
+        function salvarLimiteCreditoLocal() {
+            localStorage.setItem(STORAGE_LIMITE_CREDITO, JSON.stringify(limiteCredito));
+        }
+
+        function salvarMetasLocal() {
+            localStorage.setItem(STORAGE_METAS, JSON.stringify(metas));
+        }
+
+        // ---------- FUNÇÕES DO FIREBASE ----------
+        async function carregarDoFirebase(user) {
+            if (!user) return;
+
+            try {
+                atualizarStatusSync('syncing');
+                const doc = await db.collection('users').doc(user.uid).get();
+
+                if (doc.exists) {
+                    const data = doc.data();
+                    lancamentos = data.lancamentos || [];
+                    reservas = data.reservas || [];
+                    categorias = data.categorias || ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer',
                         'Saúde', 'Educação'
                     ];
-                } catch (e) {
-                    categorias = ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'];
-                }
+                    metas = data.metas || [];
+                    limiteCredito = data.limiteCredito || 0;
 
-                try {
-                    const rawLc = localStorage.getItem(STORAGE_LIMITE_CREDITO);
-                    limiteCredito = rawLc ? parseFloat(rawLc) : 0;
-                } catch (e) { limiteCredito = 0; }
-
-                try {
-                    const rawM = localStorage.getItem(STORAGE_METAS);
-                    metas = rawM ? JSON.parse(rawM) : [];
-                } catch (e) { metas = []; }
-
-                try {
-                    const dark = localStorage.getItem(STORAGE_DARKMODE);
-                    if (dark === 'true' && document.body) {
-                        document.body.classList.add('dark-mode');
-                        const btnDark = document.getElementById('btnDarkMode');
-                        if (btnDark) btnDark.textContent = '☀️';
-                    }
-                } catch (e) {}
-
-                // Garantir que lançamentos antigos tenham moeda e status pago
-                lancamentos = lancamentos.map(l => {
-                    if (!l.moeda) l.moeda = MOEDA_PADRAO;
-                    if (l.pago === undefined) l.pago = false;
-                    if (!l.parcelasPagas) l.parcelasPagas = [];
-                    return l;
-                });
-
-                reservas = reservas.map(r => {
-                    if (!r.moeda) r.moeda = MOEDA_PADRAO;
-                    return r;
-                });
-            }
-
-            function salvarLancamentosLocal() {
-                localStorage.setItem(STORAGE_LANCAMENTOS, JSON.stringify(lancamentos));
-            }
-
-            function salvarReservasLocal() {
-                localStorage.setItem(STORAGE_RESERVAS, JSON.stringify(reservas));
-            }
-
-            function salvarCategoriasLocal() {
-                localStorage.setItem(STORAGE_CATEGORIAS, JSON.stringify(categorias));
-            }
-
-            function salvarLimiteCreditoLocal() {
-                localStorage.setItem(STORAGE_LIMITE_CREDITO, JSON.stringify(limiteCredito));
-            }
-
-            function salvarMetasLocal() {
-                localStorage.setItem(STORAGE_METAS, JSON.stringify(metas));
-            }
-
-            // ---------- FUNÇÕES DO FIREBASE ----------
-            async function carregarDoFirebase(user) {
-                if (!user) return;
-
-                try {
-                    atualizarStatusSync('syncing');
-                    const doc = await db.collection('users').doc(user.uid).get();
-
-                    if (doc.exists) {
-                        const data = doc.data();
-                        lancamentos = data.lancamentos || [];
-                        reservas = data.reservas || [];
-                        categorias = data.categorias || ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer',
-                            'Saúde', 'Educação'
-                        ];
-                        metas = data.metas || [];
-                        limiteCredito = data.limiteCredito || 0;
-
-                        // Garantir compatibilidade
-                        lancamentos = lancamentos.map(l => {
-                            if (!l.moeda) l.moeda = MOEDA_PADRAO;
-                            if (l.pago === undefined) l.pago = false;
-                            if (!l.parcelasPagas) l.parcelasPagas = [];
-                            return l;
-                        });
-
-                        reservas = reservas.map(r => {
-                            if (!r.moeda) r.moeda = MOEDA_PADRAO;
-                            return r;
-                        });
-
-                        salvarDadosLocal();
-                        atualizarStatusSync(true);
-                    } else {
-                        // Criar perfil no Firebase
-                        await criarPerfilFirebase(user);
-                    }
-                } catch (error) {
-                    console.error('Erro ao carregar do Firebase:', error);
-                    atualizarStatusSync(false);
-                    carregarDadosLocal();
-                }
-
-                renderizarTudo();
-            }
-
-            async function salvarNoFirebase() {
-                if (!currentUser) return;
-
-                try {
-                    atualizarStatusSync('syncing');
-                    await db.collection('users').doc(currentUser.uid).set({
-                        lancamentos: lancamentos,
-                        reservas: reservas,
-                        categorias: categorias,
-                        metas: metas,
-                        limiteCredito: limiteCredito,
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    }, { merge: true });
-                    atualizarStatusSync(true);
-                } catch (error) {
-                    console.error('Erro ao salvar no Firebase:', error);
-                    atualizarStatusSync(false);
-                }
-            }
-
-            async function criarPerfilFirebase(user) {
-                try {
-                    await db.collection('users').doc(user.uid).set({
-                        lancamentos: [],
-                        reservas: [],
-                        categorias: ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'],
-                        metas: [],
-                        limiteCredito: 0,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    lancamentos = lancamentos.map(l => {
+                        if (!l.moeda) l.moeda = MOEDA_PADRAO;
+                        if (l.pago === undefined) l.pago = false;
+                        if (!l.parcelasPagas) l.parcelasPagas = [];
+                        return l;
                     });
-                    carregarDadosLocal();
-                } catch (error) {
-                    console.error('Erro ao criar perfil:', error);
+
+                    reservas = reservas.map(r => {
+                        if (!r.moeda) r.moeda = MOEDA_PADRAO;
+                        return r;
+                    });
+
+                    salvarDadosLocal();
+                    atualizarStatusSync(true);
+                } else {
+                    await criarPerfilFirebase(user);
                 }
+            } catch (error) {
+                console.error('Erro ao carregar do Firebase:', error);
+                atualizarStatusSync(false);
+                carregarDadosLocal();
             }
 
-            function salvarDadosLocal() {
-                salvarLancamentosLocal();
-                salvarReservasLocal();
-                salvarCategoriasLocal();
-                salvarLimiteCreditoLocal();
-                salvarMetasLocal();
+            renderizarTudo();
+        }
+
+        async function salvarNoFirebase() {
+            if (!currentUser) return;
+
+            try {
+                atualizarStatusSync('syncing');
+                await db.collection('users').doc(currentUser.uid).set({
+                    lancamentos: lancamentos,
+                    reservas: reservas,
+                    categorias: categorias,
+                    metas: metas,
+                    limiteCredito: limiteCredito,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+                atualizarStatusSync(true);
+            } catch (error) {
+                console.error('Erro ao salvar no Firebase:', error);
+                atualizarStatusSync(false);
             }
+        }
 
-            function atualizarStatusSync(status) {
-                const dot = document.getElementById('syncDot');
-                const text = document.getElementById('syncText');
+        async function criarPerfilFirebase(user) {
+            try {
+                await db.collection('users').doc(user.uid).set({
+                    lancamentos: [],
+                    reservas: [],
+                    categorias: ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'],
+                    metas: [],
+                    limiteCredito: 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                carregarDadosLocal();
+            } catch (error) {
+                console.error('Erro ao criar perfil:', error);
+            }
+        }
 
-                if (!dot || !text) return;
+        function salvarDadosLocal() {
+            salvarLancamentosLocal();
+            salvarReservasLocal();
+            salvarCategoriasLocal();
+            salvarLimiteCreditoLocal();
+            salvarMetasLocal();
+        }
 
-                if (status === true) {
-                    dot.className = 'dot online';
-                    text.textContent = 'Sincronizado';
-                } else if (status === false) {
-                    dot.className = 'dot offline';
-                    text.textContent = 'Offline';
-                } else if (status === 'syncing') {
-                    dot.className = 'dot syncing';
-                    text.textContent = 'Sincronizando...';
+        function atualizarStatusSync(status) {
+            if (!syncDot || !syncText) return;
+
+            if (status === true) {
+                syncDot.className = 'dot online';
+                syncText.textContent = 'Sincronizado';
+            } else if (status === false) {
+                syncDot.className = 'dot offline';
+                syncText.textContent = 'Offline';
+            } else if (status === 'syncing') {
+                syncDot.className = 'dot syncing';
+                syncText.textContent = 'Sincronizando...';
+            }
+        }
+
+        // ---------- HELPERS ----------
+        function hoje() {
+            return new Date().toISOString().slice(0, 10);
+        }
+
+        function dataParaStr(d) {
+            if (!d) return '';
+            const dt = new Date(d + 'T00:00:00');
+            return dt.toLocaleDateString('pt-BR');
+        }
+
+        function getSimboloMoeda(moeda) {
+            return MOEDAS[moeda]?.simbolo || MOEDAS[MOEDA_PADRAO].simbolo;
+        }
+
+        function formatarMoeda(v, moeda) {
+            const m = moeda || MOEDA_PADRAO;
+            const simbolo = getSimboloMoeda(m);
+            return simbolo + ' ' + v.toFixed(2).replace('.', ',');
+        }
+
+        // ---------- CÁLCULOS CORRIGIDOS ----------
+        function calcularParcelasNaoPagas(tipo) {
+            let total = 0;
+            lancamentos.forEach(l => {
+                if (l.tipo === tipo && l.parcelas && l.parcelas.length > 0) {
+                    l.parcelas.forEach((p, idx) => {
+                        const parcelasPagas = l.parcelasPagas || [];
+                        if (!parcelasPagas.includes(idx)) {
+                            const valorParcela = l.valor / l.parcelas.length;
+                            total += valorParcela;
+                        }
+                    });
                 }
-            }
+            });
+            return total;
+        }
 
-            // ---------- HELPERS ----------
-            function hoje() {
-                return new Date().toISOString().slice(0, 10);
-            }
-
-            function dataParaStr(d) {
-                if (!d) return '';
-                const dt = new Date(d + 'T00:00:00');
-                return dt.toLocaleDateString('pt-BR');
-            }
-
-            function getSimboloMoeda(moeda) {
-                return MOEDAS[moeda]?.simbolo || MOEDAS[MOEDA_PADRAO].simbolo;
-            }
-
-            function formatarMoeda(v, moeda) {
-                const m = moeda || MOEDA_PADRAO;
-                const simbolo = getSimboloMoeda(m);
-                return simbolo + ' ' + v.toFixed(2).replace('.', ',');
-            }
-
-            function calcularParcelasFaturasNaoPagas() {
-                let totalParcelas = 0;
-                lancamentos.forEach(l => {
-                    if (l.tipo === 'fatura' && l.parcelas && l.parcelas.length > 0) {
+        function calcularFaturasNaoPagas() {
+            let total = 0;
+            lancamentos.forEach(l => {
+                if (l.tipo === 'fatura') {
+                    if (l.parcelas && l.parcelas.length > 0) {
                         l.parcelas.forEach((p, idx) => {
                             const parcelasPagas = l.parcelasPagas || [];
                             if (!parcelasPagas.includes(idx)) {
                                 const valorParcela = l.valor / l.parcelas.length;
-                                totalParcelas += valorParcela;
+                                total += valorParcela;
                             }
                         });
-                    }
-                });
-                return totalParcelas;
-            }
-
-            function calcularTotalFaturasNaoPagas() {
-                let totalFaturas = 0;
-                lancamentos.forEach(l => {
-                    if (l.tipo === 'fatura' && !l.pago) {
-                        totalFaturas += l.valor;
-                    }
-                });
-                return totalFaturas;
-            }
-
-            function togglePago(lancamentoId, parcelaIndex) {
-                const l = lancamentos.find(item => item.id === lancamentoId);
-                if (!l) return;
-
-                if (parcelaIndex !== undefined) {
-                    if (!l.parcelasPagas) l.parcelasPagas = [];
-                    const idx = l.parcelasPagas.indexOf(parcelaIndex);
-                    if (idx > -1) {
-                        l.parcelasPagas.splice(idx, 1);
-                    } else {
-                        l.parcelasPagas.push(parcelaIndex);
-                    }
-                    const totalParcelas = l.parcelas ? l.parcelas.length : 0;
-                    if (totalParcelas > 0 && l.parcelasPagas.length === totalParcelas) {
-                        l.pago = true;
-                    } else {
-                        l.pago = false;
-                    }
-                } else {
-                    l.pago = !l.pago;
-                    if (l.pago && l.parcelas) {
-                        l.parcelasPagas = l.parcelas.map((_, idx) => idx);
-                    } else if (!l.pago && l.parcelas) {
-                        l.parcelasPagas = [];
+                    } else if (!l.pago) {
+                        total += l.valor;
                     }
                 }
+            });
+            return total;
+        }
 
+        function calcularDespesasNaoPagas() {
+            let total = 0;
+            lancamentos.forEach(l => {
+                if (l.tipo === 'despesa') {
+                    if (l.parcelas && l.parcelas.length > 0) {
+                        l.parcelas.forEach((p, idx) => {
+                            const parcelasPagas = l.parcelasPagas || [];
+                            if (!parcelasPagas.includes(idx)) {
+                                const valorParcela = l.valor / l.parcelas.length;
+                                total += valorParcela;
+                            }
+                        });
+                    } else if (!l.pago) {
+                        total += l.valor;
+                    }
+                }
+            });
+            return total;
+        }
+
+        function calcularTotalReceitas() {
+            return lancamentos
+                .filter(l => l.tipo === 'receita')
+                .reduce((s, l) => s + l.valor, 0);
+        }
+
+        // ---------- TOGGLE PAGO ----------
+        function togglePago(lancamentoId, parcelaIndex) {
+            const l = lancamentos.find(item => item.id === lancamentoId);
+            if (!l) return;
+
+            if (parcelaIndex !== undefined) {
+                if (!l.parcelasPagas) l.parcelasPagas = [];
+                const idx = l.parcelasPagas.indexOf(parcelaIndex);
+                if (idx > -1) {
+                    l.parcelasPagas.splice(idx, 1);
+                } else {
+                    l.parcelasPagas.push(parcelaIndex);
+                }
+                const totalParcelas = l.parcelas ? l.parcelas.length : 0;
+                if (totalParcelas > 0 && l.parcelasPagas.length === totalParcelas) {
+                    l.pago = true;
+                } else {
+                    l.pago = false;
+                }
+            } else {
+                l.pago = !l.pago;
+                if (l.pago && l.parcelas) {
+                    l.parcelasPagas = l.parcelas.map((_, idx) => idx);
+                } else if (!l.pago && l.parcelas) {
+                    l.parcelasPagas = [];
+                }
+            }
+
+            salvarLancamentosLocal();
+            salvarNoFirebase();
+            renderizarTudo();
+        }
+
+        window.togglePagoHandler = function(id, parcelaIndex) {
+            togglePago(id, parcelaIndex);
+        };
+
+        window.excluirLancamento = function(id) {
+            if (!confirm('Deseja realmente excluir este lançamento?')) return;
+            const idx = lancamentos.findIndex(l => l.id === id);
+            if (idx !== -1) {
+                lancamentos.splice(idx, 1);
                 salvarLancamentosLocal();
                 salvarNoFirebase();
                 renderizarTudo();
             }
+        };
 
-            window.togglePagoHandler = function(id, parcelaIndex) {
-                togglePago(id, parcelaIndex);
-            };
+        // ---------- CALENDÁRIO ----------
+        let calendarioData = new Date();
+        let calendarioDiaSelecionado = null;
 
-            window.excluirLancamento = function(id) {
-                if (!confirm('Deseja realmente excluir este lançamento?')) return;
-                const idx = lancamentos.findIndex(l => l.id === id);
-                if (idx !== -1) {
-                    lancamentos.splice(idx, 1);
-                    salvarLancamentosLocal();
-                    salvarNoFirebase();
-                    renderizarTudo();
-                }
-            };
+        function renderizarCalendario() {
+            const ano = calendarioData.getFullYear();
+            const mes = calendarioData.getMonth();
 
-            // ============================================================
-            //  CALENDÁRIO
-            // ============================================================
-
-            let calendarioData = new Date();
-            let calendarioDiaSelecionado = null;
-
-            function renderizarCalendario() {
-                const ano = calendarioData.getFullYear();
-                const mes = calendarioData.getMonth();
-
-                const mesAno = document.getElementById('calendarioMesAno');
-                if (mesAno) {
-                    mesAno.textContent = new Date(ano, mes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-                }
-
-                const grid = document.getElementById('calendarioGrid');
-                if (!grid) return;
-
-                const primeiroDia = new Date(ano, mes, 1).getDay();
-                const diasNoMes = new Date(ano, mes + 1, 0).getDate();
-                const hojeStr = hoje();
-
-                // Dias da semana
-                const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-                let html = diasSemana.map(d => `<div class="dia-semana">${d}</div>`).join('');
-
-                // Dias vazios no início
-                for (let i = 0; i < primeiroDia; i++) {
-                    html += `<div class="dia vazio"></div>`;
-                }
-
-                // Dias do mês
-                for (let dia = 1; dia <= diasNoMes; dia++) {
-                    const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
-                    const isHoje = dataStr === hojeStr;
-
-                    // Buscar eventos do dia
-                    const eventos = [];
-                    lancamentos.forEach(l => {
-                        if (l.tipo === 'receita' || l.tipo === 'despesa' || l.tipo === 'fatura') {
-                            if (l.parcelas && l.parcelas.length > 0) {
-                                l.parcelas.forEach((p, idx) => {
-                                    if (p === dataStr) {
-                                        const isPago = l.parcelasPagas && l.parcelasPagas.includes(idx);
-                                        eventos.push({
-                                            desc: l.descricao + (l.parcelas.length > 1 ? ` (${idx+1}/${l.parcelas.length})` : ''),
-                                            tipo: isPago ? 'pago' : l.tipo,
-                                            valor: l.valor / l.parcelas.length,
-                                            moeda: l.moeda || MOEDA_PADRAO
-                                        });
-                                    }
-                                });
-                            } else if (l.data === dataStr) {
-                                const isPago = l.pago || false;
-                                eventos.push({
-                                    desc: l.descricao,
-                                    tipo: isPago ? 'pago' : l.tipo,
-                                    valor: l.valor,
-                                    moeda: l.moeda || MOEDA_PADRAO
-                                });
-                            }
-                        }
-                    });
-
-                    const isSelecionado = calendarioDiaSelecionado === dataStr;
-                    const classes = ['dia'];
-                    if (isHoje) classes.push('hoje');
-                    if (isSelecionado) classes.push('selecionado');
-
-                    html += `<div class="${classes.join(' ')}" data-data="${dataStr}" onclick="selecionarDiaCalendario('${dataStr}')">
-                        <span class="dia-numero">${dia}</span>
-                        ${eventos.length > 3 ? `<span class="evento-count">${eventos.length}</span>` : ''}
-                        ${eventos.slice(0, 3).map(e => 
-                            `<div class="evento ${e.tipo}">${e.desc} ${formatarMoeda(e.valor, e.moeda)}</div>`
-                        ).join('')}
-                    </div>`;
-                }
-
-                grid.innerHTML = html;
-
-                // Se houver dia selecionado, mostrar eventos
-                if (calendarioDiaSelecionado) {
-                    mostrarEventosDia(calendarioDiaSelecionado);
-                } else {
-                    // Selecionar hoje por padrão
-                    const hojeData = hoje();
-                    calendarioDiaSelecionado = hojeData;
-                    mostrarEventosDia(hojeData);
-                }
+            const mesAno = document.getElementById('calendarioMesAno');
+            if (mesAno) {
+                mesAno.textContent = new Date(ano, mes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
             }
 
-            window.selecionarDiaCalendario = function(dataStr) {
-                calendarioDiaSelecionado = dataStr;
-                renderizarCalendario();
-            };
+            const grid = document.getElementById('calendarioGrid');
+            if (!grid) return;
 
-            function mostrarEventosDia(dataStr) {
-                const container = document.getElementById('calendarioEventosDia');
-                if (!container) return;
+            const primeiroDia = new Date(ano, mes, 1).getDay();
+            const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+            const hojeStr = hoje();
+
+            const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            let html = diasSemana.map(d => `<div class="dia-semana">${d}</div>`).join('');
+
+            for (let i = 0; i < primeiroDia; i++) {
+                html += `<div class="dia vazio"></div>`;
+            }
+
+            for (let dia = 1; dia <= diasNoMes; dia++) {
+                const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+                const isHoje = dataStr === hojeStr;
 
                 const eventos = [];
                 lancamentos.forEach(l => {
@@ -2693,365 +2934,1532 @@
                                     const isPago = l.parcelasPagas && l.parcelasPagas.includes(idx);
                                     eventos.push({
                                         desc: l.descricao + (l.parcelas.length > 1 ? ` (${idx+1}/${l.parcelas.length})` : ''),
-                                        tipo: l.tipo,
+                                        tipo: isPago ? 'pago' : l.tipo,
                                         valor: l.valor / l.parcelas.length,
-                                        moeda: l.moeda || MOEDA_PADRAO,
-                                        pago: isPago,
-                                        id: l.id,
-                                        parcelaIndex: idx
+                                        moeda: l.moeda || MOEDA_PADRAO
                                     });
                                 }
                             });
                         } else if (l.data === dataStr) {
+                            const isPago = l.pago || false;
                             eventos.push({
                                 desc: l.descricao,
-                                tipo: l.tipo,
+                                tipo: isPago ? 'pago' : l.tipo,
                                 valor: l.valor,
-                                moeda: l.moeda || MOEDA_PADRAO,
-                                pago: l.pago || false,
-                                id: l.id,
-                                parcelaIndex: undefined
+                                moeda: l.moeda || MOEDA_PADRAO
                             });
                         }
                     }
                 });
 
-                if (eventos.length === 0) {
-                    container.innerHTML = `<div class="empty-message">Nenhum evento para este dia.</div>`;
-                    return;
-                }
+                const isSelecionado = calendarioDiaSelecionado === dataStr;
+                const classes = ['dia'];
+                if (isHoje) classes.push('hoje');
+                if (isSelecionado) classes.push('selecionado');
 
-                const tipos = {
-                    'receita': { label: 'Receita', cor: '#2ecc71' },
-                    'despesa': { label: 'Despesa', cor: '#e74c3c' },
-                    'fatura': { label: 'Fatura', cor: '#f39c12' }
-                };
-
-                container.innerHTML = eventos.map(e => {
-                    const info = tipos[e.tipo] || { label: e.tipo, cor: '#95a5a6' };
-                    const status = e.pago ? '✅ Pago' : '⬜ Pendente';
-                    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-bottom:1px solid var(--border-color);">
-                        <div>
-                            <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${info.cor}; margin-right:8px;"></span>
-                            <strong>${e.desc}</strong>
-                            <span style="color:var(--text-secondary); font-size:12px; margin-left:8px;">${info.label}</span>
-                        </div>
-                        <div>
-                            <span style="font-weight:600;">${formatarMoeda(e.valor, e.moeda)}</span>
-                            <span style="font-size:12px; margin-left:8px; color:${e.pago ? 'var(--primary-color)' : 'var(--danger-color)'};">${status}</span>
-                            ${!e.pago ? `<button class="btn-pago" style="margin-left:8px;" onclick="window.togglePagoHandler('${e.id}', ${e.parcelaIndex !== undefined ? e.parcelaIndex : 'undefined'})">Pagar</button>` : ''}
-                        </div>
-                    </div>`;
-                }).join('');
+                html += `<div class="${classes.join(' ')}" data-data="${dataStr}" onclick="selecionarDiaCalendario('${dataStr}')">
+                    <span class="dia-numero">${dia}</span>
+                    ${eventos.length > 3 ? `<span class="evento-count">${eventos.length}</span>` : ''}
+                    ${eventos.slice(0, 3).map(e => 
+                        `<div class="evento ${e.tipo}">${e.desc} ${formatarMoeda(e.valor, e.moeda)}</div>`
+                    ).join('')}
+                </div>`;
             }
 
-            // ============================================================
-            //  METAS
-            // ============================================================
+            grid.innerHTML = html;
 
-            function renderizarMetas() {
-                const grid = document.getElementById('metasGrid');
-                if (!grid) return;
-
-                if (metas.length === 0) {
-                    grid.innerHTML = `<div class="empty-message" style="grid-column:1/-1;">Nenhuma meta cadastrada. Crie sua primeira meta!</div>`;
-                    return;
-                }
-
-                grid.innerHTML = metas.map((meta, idx) => {
-                    const progresso = meta.valorAlvo > 0 ? (meta.valorAtual / meta.valorAlvo) * 100 : 0;
-                    const progressoFormatado = progresso.toFixed(1);
-                    const restante = meta.valorAlvo - meta.valorAtual;
-
-                    let barraClass = 'barra';
-                    if (progresso >= 100) barraClass += '';
-                    else if (progresso >= 75) barraClass += ' alerta';
-                    else barraClass += ' perigo';
-
-                    const prazo = meta.prazo ? dataParaStr(meta.prazo) : 'Sem prazo';
-
-                    return `
-                        <div class="meta-card">
-                            <div class="meta-header">
-                                <span class="meta-nome">${meta.nome}</span>
-                                <span class="meta-valor">${formatarMoeda(meta.valorAtual)} / ${formatarMoeda(meta.valorAlvo)}</span>
-                            </div>
-                            <div class="meta-progresso">
-                                <div class="${barraClass}" style="width:${Math.min(progresso, 100)}%"></div>
-                            </div>
-                            <div class="meta-detalhes">
-                                <span>${progressoFormatado}% concluído</span>
-                                <span>Faltam ${formatarMoeda(restante)}</span>
-                            </div>
-                            <div class="meta-detalhes" style="margin-top:4px;">
-                                <span>📅 ${prazo}</span>
-                                <span>${meta.valorAtual >= meta.valorAlvo ? '🎉 Meta alcançada!' : '🚀 Em andamento'}</span>
-                            </div>
-                            <div class="meta-actions">
-                                <button class="btn btn-edit btn-sm" onclick="editarMeta(${idx})">✏️ Editar</button>
-                                <button class="btn btn-danger btn-sm" onclick="excluirMeta(${idx})">🗑️</button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+            if (calendarioDiaSelecionado) {
+                mostrarEventosDia(calendarioDiaSelecionado);
+            } else {
+                const hojeData = hoje();
+                calendarioDiaSelecionado = hojeData;
+                mostrarEventosDia(hojeData);
             }
+        }
 
-            window.editarMeta = function(idx) {
-                if (idx < 0 || idx >= metas.length) return;
-                const meta = metas[idx];
+        window.selecionarDiaCalendario = function(dataStr) {
+            calendarioDiaSelecionado = dataStr;
+            renderizarCalendario();
+        };
 
-                document.getElementById('editMetaNome').value = meta.nome;
-                document.getElementById('editMetaValorAlvo').value = meta.valorAlvo;
-                document.getElementById('editMetaValorAtual').value = meta.valorAtual;
-                document.getElementById('editMetaPrazo').value = meta.prazo || '';
+        function mostrarEventosDia(dataStr) {
+            const container = document.getElementById('calendarioEventosDia');
+            if (!container) return;
 
-                document.getElementById('modalEditarMeta').classList.add('active');
-                document.getElementById('modalEditarMeta').dataset.idx = idx;
-            };
-
-            window.excluirMeta = function(idx) {
-                if (!confirm('Deseja realmente excluir esta meta?')) return;
-                metas.splice(idx, 1);
-                salvarMetasLocal();
-                salvarNoFirebase();
-                renderizarMetas();
-            };
-
-            function adicionarMeta() {
-                const nome = document.getElementById('metaNome').value.trim();
-                const valorAlvo = parseFloat(document.getElementById('metaValorAlvo').value);
-                const valorAtual = parseFloat(document.getElementById('metaValorAtual').value) || 0;
-                const prazo = document.getElementById('metaPrazo').value;
-
-                if (!nome) { alert('Informe um nome para a meta.'); return; }
-                if (isNaN(valorAlvo) || valorAlvo <= 0) { alert('Informe um valor alvo válido.'); return; }
-
-                metas.push({
-                    id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
-                    nome: nome,
-                    valorAlvo: valorAlvo,
-                    valorAtual: valorAtual,
-                    prazo: prazo || '',
-                    criadoEm: new Date().toISOString()
-                });
-
-                salvarMetasLocal();
-                salvarNoFirebase();
-
-                document.getElementById('metaNome').value = '';
-                document.getElementById('metaValorAlvo').value = '';
-                document.getElementById('metaValorAtual').value = '';
-                document.getElementById('metaPrazo').value = '';
-
-                renderizarMetas();
-            }
-
-            function salvarEdicaoMeta() {
-                const idx = parseInt(document.getElementById('modalEditarMeta').dataset.idx);
-                if (isNaN(idx) || idx < 0 || idx >= metas.length) return;
-
-                const nome = document.getElementById('editMetaNome').value.trim();
-                const valorAlvo = parseFloat(document.getElementById('editMetaValorAlvo').value);
-                const valorAtual = parseFloat(document.getElementById('editMetaValorAtual').value) || 0;
-                const prazo = document.getElementById('editMetaPrazo').value;
-
-                if (!nome) { alert('Informe um nome para a meta.'); return; }
-                if (isNaN(valorAlvo) || valorAlvo <= 0) { alert('Informe um valor alvo válido.'); return; }
-
-                metas[idx] = {
-                    ...metas[idx],
-                    nome: nome,
-                    valorAlvo: valorAlvo,
-                    valorAtual: valorAtual,
-                    prazo: prazo || ''
-                };
-
-                salvarMetasLocal();
-                salvarNoFirebase();
-                document.getElementById('modalEditarMeta').classList.remove('active');
-                renderizarMetas();
-            }
-
-            // ---------- FUNÇÃO PARA ADICIONAR LANÇAMENTO (com suporte a metas) ----------
-            function adicionarLancamento() {
-                const tipo = document.getElementById('tipoLancamento').value;
-                const moeda = document.getElementById('moedaLancamento').value;
-                const categoria = document.getElementById('categoriaLancamento').value;
-                const desc = document.getElementById('descLancamento').value.trim();
-                const valor = parseFloat(document.getElementById('valorLancamento').value);
-                const data = document.getElementById('dataLancamento').value;
-                const parcelas = parseInt(document.getElementById('parcelasLancamento').value) || 1;
-
-                if (!desc) { alert('Informe uma descrição.'); return; }
-                if (isNaN(valor) || valor <= 0) { alert('Informe um valor válido.'); return; }
-                if (!data) { alert('Informe a data.'); return; }
-
-                if (tipo === 'fatura' && parcelas > 1) {
-                    if (!confirm('Faturas geralmente não são parceladas. Deseja continuar com ' + parcelas +
-                            ' parcelas?')) {
-                        return;
+            const eventos = [];
+            lancamentos.forEach(l => {
+                if (l.tipo === 'receita' || l.tipo === 'despesa' || l.tipo === 'fatura') {
+                    if (l.parcelas && l.parcelas.length > 0) {
+                        l.parcelas.forEach((p, idx) => {
+                            if (p === dataStr) {
+                                const isPago = l.parcelasPagas && l.parcelasPagas.includes(idx);
+                                eventos.push({
+                                    desc: l.descricao + (l.parcelas.length > 1 ? ` (${idx+1}/${l.parcelas.length})` : ''),
+                                    tipo: l.tipo,
+                                    valor: l.valor / l.parcelas.length,
+                                    moeda: l.moeda || MOEDA_PADRAO,
+                                    pago: isPago,
+                                    id: l.id,
+                                    parcelaIndex: idx
+                                });
+                            }
+                        });
+                    } else if (l.data === dataStr) {
+                        eventos.push({
+                            desc: l.descricao,
+                            tipo: l.tipo,
+                            valor: l.valor,
+                            moeda: l.moeda || MOEDA_PADRAO,
+                            pago: l.pago || false,
+                            id: l.id,
+                            parcelaIndex: undefined
+                        });
                     }
                 }
+            });
 
-                const parcelasDatas = [];
-                const dt = new Date(data + 'T00:00:00');
-                for (let i = 0; i < parcelas; i++) {
-                    const d = new Date(dt);
-                    d.setMonth(d.getMonth() + i);
-                    parcelasDatas.push(d.toISOString().slice(0, 10));
-                }
-
-                lancamentos.push({
-                    id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
-                    tipo: tipo,
-                    moeda: moeda,
-                    categoria: categoria || 'Sem categoria',
-                    descricao: desc,
-                    valor: valor,
-                    data: data,
-                    parcelas: parcelasDatas,
-                    parcelasPagas: [],
-                    pago: false,
-                    criadoEm: new Date().toISOString()
-                });
-
-                if (tipo === 'aumento_limite') {
-                    limiteCredito += valor;
-                    salvarLimiteCreditoLocal();
-                }
-
-                // Verificar se a receita pode contribuir com metas
-                if (tipo === 'receita') {
-                    // Atualizar metas com parte do valor (opcional)
-                    // Por simplicidade, não automatizamos a distribuição
-                }
-
-                salvarLancamentosLocal();
-                salvarNoFirebase();
-                renderizarTudo();
+            if (eventos.length === 0) {
+                container.innerHTML = `<div class="empty-message">Nenhum evento para este dia.</div>`;
+                return;
             }
 
-            // ---------- FUNÇÃO PARA RENDERIZAR TUDO ----------
-            function renderizarTudo() {
-                renderizarCategorias();
-                renderizarInicio();
-                renderizarTabela();
-                renderizarReservas();
-                renderizarEstatisticas();
-                renderizarCalendario();
-                renderizarMetas();
+            const tipos = {
+                'receita': { label: 'Receita', cor: '#2ecc71' },
+                'despesa': { label: 'Despesa', cor: '#e74c3c' },
+                'fatura': { label: 'Fatura', cor: '#f39c12' }
+            };
+
+            container.innerHTML = eventos.map(e => {
+                const info = tipos[e.tipo] || { label: e.tipo, cor: '#95a5a6' };
+                const status = e.pago ? '✅ Pago' : '⬜ Pendente';
+                return `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-bottom:1px solid var(--border-color);">
+                    <div>
+                        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${info.cor}; margin-right:8px;"></span>
+                        <strong>${e.desc}</strong>
+                        <span style="color:var(--text-secondary); font-size:12px; margin-left:8px;">${info.label}</span>
+                    </div>
+                    <div>
+                        <span style="font-weight:600;">${formatarMoeda(e.valor, e.moeda)}</span>
+                        <span style="font-size:12px; margin-left:8px; color:${e.pago ? 'var(--primary-color)' : 'var(--danger-color)'};">${status}</span>
+                        ${!e.pago ? `<button class="btn-pago" style="margin-left:8px;" onclick="window.togglePagoHandler('${e.id}', ${e.parcelaIndex !== undefined ? e.parcelaIndex : 'undefined'})">Pagar</button>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // ---------- METAS ----------
+        function renderizarMetas() {
+            const grid = document.getElementById('metasGrid');
+            if (!grid) return;
+
+            if (metas.length === 0) {
+                grid.innerHTML = `<div class="empty-message" style="grid-column:1/-1;">Nenhuma meta cadastrada. Crie sua primeira meta!</div>`;
+                return;
+            }
+
+            grid.innerHTML = metas.map((meta, idx) => {
+                const progresso = meta.valorAlvo > 0 ? (meta.valorAtual / meta.valorAlvo) * 100 : 0;
+                const progressoFormatado = progresso.toFixed(1);
+                const restante = meta.valorAlvo - meta.valorAtual;
+
+                let barraClass = 'barra';
+                if (progresso >= 100) barraClass += '';
+                else if (progresso >= 75) barraClass += ' alerta';
+                else barraClass += ' perigo';
+
+                const prazo = meta.prazo ? dataParaStr(meta.prazo) : 'Sem prazo';
+
+                return `
+                    <div class="meta-card">
+                        <div class="meta-header">
+                            <span class="meta-nome">${meta.nome}</span>
+                            <span class="meta-valor">${formatarMoeda(meta.valorAtual)} / ${formatarMoeda(meta.valorAlvo)}</span>
+                        </div>
+                        <div class="meta-progresso">
+                            <div class="${barraClass}" style="width:${Math.min(progresso, 100)}%"></div>
+                        </div>
+                        <div class="meta-detalhes">
+                            <span>${progressoFormatado}% concluído</span>
+                            <span>Faltam ${formatarMoeda(restante)}</span>
+                        </div>
+                        <div class="meta-detalhes" style="margin-top:4px;">
+                            <span>📅 ${prazo}</span>
+                            <span>${meta.valorAtual >= meta.valorAlvo ? '🎉 Meta alcançada!' : '🚀 Em andamento'}</span>
+                        </div>
+                        <div class="meta-actions">
+                            <button class="btn btn-edit btn-sm" onclick="editarMeta(${idx})">✏️ Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="excluirMeta(${idx})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.editarMeta = function(idx) {
+            if (idx < 0 || idx >= metas.length) return;
+            const meta = metas[idx];
+
+            document.getElementById('editMetaNome').value = meta.nome;
+            document.getElementById('editMetaValorAlvo').value = meta.valorAlvo;
+            document.getElementById('editMetaValorAtual').value = meta.valorAtual;
+            document.getElementById('editMetaPrazo').value = meta.prazo || '';
+
+            document.getElementById('modalEditarMeta').classList.add('active');
+            document.getElementById('modalEditarMeta').dataset.idx = idx;
+        };
+
+        window.excluirMeta = function(idx) {
+            if (!confirm('Deseja realmente excluir esta meta?')) return;
+            metas.splice(idx, 1);
+            salvarMetasLocal();
+            salvarNoFirebase();
+            renderizarMetas();
+        };
+
+        function adicionarMeta() {
+            const nome = document.getElementById('metaNome').value.trim();
+            const valorAlvo = parseFloat(document.getElementById('metaValorAlvo').value);
+            const valorAtual = parseFloat(document.getElementById('metaValorAtual').value) || 0;
+            const prazo = document.getElementById('metaPrazo').value;
+
+            if (!nome) { alert('Informe um nome para a meta.'); return; }
+            if (isNaN(valorAlvo) || valorAlvo <= 0) { alert('Informe um valor alvo válido.'); return; }
+
+            metas.push({
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+                nome: nome,
+                valorAlvo: valorAlvo,
+                valorAtual: valorAtual,
+                prazo: prazo || '',
+                criadoEm: new Date().toISOString()
+            });
+
+            salvarMetasLocal();
+            salvarNoFirebase();
+
+            document.getElementById('metaNome').value = '';
+            document.getElementById('metaValorAlvo').value = '';
+            document.getElementById('metaValorAtual').value = '';
+            document.getElementById('metaPrazo').value = '';
+
+            renderizarMetas();
+        }
+
+        function salvarEdicaoMeta() {
+            const idx = parseInt(document.getElementById('modalEditarMeta').dataset.idx);
+            if (isNaN(idx) || idx < 0 || idx >= metas.length) return;
+
+            const nome = document.getElementById('editMetaNome').value.trim();
+            const valorAlvo = parseFloat(document.getElementById('editMetaValorAlvo').value);
+            const valorAtual = parseFloat(document.getElementById('editMetaValorAtual').value) || 0;
+            const prazo = document.getElementById('editMetaPrazo').value;
+
+            if (!nome) { alert('Informe um nome para a meta.'); return; }
+            if (isNaN(valorAlvo) || valorAlvo <= 0) { alert('Informe um valor alvo válido.'); return; }
+
+            metas[idx] = {
+                ...metas[idx],
+                nome: nome,
+                valorAlvo: valorAlvo,
+                valorAtual: valorAtual,
+                prazo: prazo || ''
+            };
+
+            salvarMetasLocal();
+            salvarNoFirebase();
+            document.getElementById('modalEditarMeta').classList.remove('active');
+            renderizarMetas();
+        }
+
+        // ---------- ADICIONAR LANÇAMENTO ----------
+        function adicionarLancamento() {
+            const tipo = document.getElementById('tipoLancamento').value;
+            const moeda = document.getElementById('moedaLancamento').value;
+            const categoria = document.getElementById('categoriaLancamento').value;
+            const desc = document.getElementById('descLancamento').value.trim();
+            const valor = parseFloat(document.getElementById('valorLancamento').value);
+            const data = document.getElementById('dataLancamento').value;
+            const parcelas = parseInt(document.getElementById('parcelasLancamento').value) || 1;
+
+            if (!desc) { alert('Informe uma descrição.'); return; }
+            if (isNaN(valor) || valor <= 0) { alert('Informe um valor válido.'); return; }
+            if (!data) { alert('Informe a data.'); return; }
+
+            if (tipo === 'fatura' && parcelas > 1) {
+                if (!confirm('Faturas geralmente não são parceladas. Deseja continuar com ' + parcelas +
+                        ' parcelas?')) {
+                    return;
+                }
+            }
+
+            const parcelasDatas = [];
+            const dt = new Date(data + 'T00:00:00');
+            for (let i = 0; i < parcelas; i++) {
+                const d = new Date(dt);
+                d.setMonth(d.getMonth() + i);
+                parcelasDatas.push(d.toISOString().slice(0, 10));
+            }
+
+            lancamentos.push({
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+                tipo: tipo,
+                moeda: moeda,
+                categoria: categoria || 'Sem categoria',
+                descricao: desc,
+                valor: valor,
+                data: data,
+                parcelas: parcelasDatas,
+                parcelasPagas: [],
+                pago: false,
+                criadoEm: new Date().toISOString()
+            });
+
+            if (tipo === 'aumento_limite') {
+                limiteCredito += valor;
+                salvarLimiteCreditoLocal();
+            }
+
+            salvarLancamentosLocal();
+            salvarNoFirebase();
+            renderizarTudo();
+        }
+
+        // ---------- ADICIONAR RESERVA ----------
+        function adicionarReserva() {
+            const nome = document.getElementById('nomeReserva').value.trim();
+            const moeda = document.getElementById('moedaReserva').value;
+            const valor = parseFloat(document.getElementById('valorReserva').value);
+            const data = document.getElementById('dataReserva').value;
+
+            if (!nome) { alert('Informe o nome da reserva.'); return; }
+            if (isNaN(valor) || valor <= 0) { alert('Informe um valor válido.'); return; }
+            if (!data) { alert('Informe a data.'); return; }
+
+            reservas.push({
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+                nome: nome,
+                moeda: moeda,
+                valor: valor,
+                data: data,
+                criadoEm: new Date().toISOString()
+            });
+
+            salvarReservasLocal();
+            salvarNoFirebase();
+            renderizarReservas();
+            renderizarInicio();
+        }
+
+        // ---------- ADICIONAR CATEGORIA ----------
+        function adicionarCategoria() {
+            const nome = document.getElementById('novaCategoria').value.trim();
+            if (!nome) { alert('Digite um nome para a categoria.'); return; }
+            if (categorias.includes(nome)) { alert('Esta categoria já existe.'); return; }
+
+            categorias.push(nome);
+            salvarCategoriasLocal();
+            salvarNoFirebase();
+            document.getElementById('novaCategoria').value = '';
+            renderizarCategorias();
+        }
+
+        // ---------- RENDERIZAÇÃO ----------
+        function renderizarCategorias() {
+            const container = document.getElementById('categoriaTags');
+            if (!container) return;
+
+            container.innerHTML = '';
+            categorias.forEach((cat, idx) => {
+                const tag = document.createElement('span');
+                tag.className = 'categoria-tag';
+                tag.innerHTML = `${cat} <span class="remove-cat" data-idx="${idx}">×</span>`;
+                container.appendChild(tag);
+            });
+
+            const selects = [
+                document.getElementById('categoriaLancamento'),
+                document.getElementById('filtroCategoria')
+            ];
+
+            selects.forEach(sel => {
+                if (!sel) return;
+                const currentVal = sel.value;
+                sel.innerHTML = '<option value="">Selecione...</option>';
+                categorias.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    opt.textContent = cat;
+                    sel.appendChild(opt);
+                });
+                if (currentVal && categorias.includes(currentVal)) {
+                    sel.value = currentVal;
+                }
+                if (sel === document.getElementById('filtroCategoria')) {
+                    const optAll = document.createElement('option');
+                    optAll.value = 'todas';
+                    optAll.textContent = 'Todas categorias';
+                    sel.prepend(optAll);
+                    sel.value = 'todas';
+                }
+            });
+
+            document.querySelectorAll('.remove-cat').forEach(el => {
+                el.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.idx);
+                    if (!isNaN(idx) && idx >= 0 && idx < categorias.length) {
+                        const emUso = lancamentos.some(l => l.categoria === categorias[idx]);
+                        if (emUso) {
+                            alert('Esta categoria está em uso em lançamentos. Remova os lançamentos primeiro ou edite-os.');
+                            return;
+                        }
+                        categorias.splice(idx, 1);
+                        salvarCategoriasLocal();
+                        salvarNoFirebase();
+                        renderizarCategorias();
+                    }
+                });
+            });
+        }
+
+        function renderizarInicio() {
+            const totalReceitas = calcularTotalReceitas();
+            const totalDespesasNaoPagas = calcularDespesasNaoPagas();
+            const totalFaturasNaoPagas = calcularFaturasNaoPagas();
+
+            const saldo = totalReceitas - totalDespesasNaoPagas - totalFaturasNaoPagas;
+
+            const saldoEl = document.getElementById('saldoDisponivel');
+            if (saldoEl) {
+                saldoEl.textContent = formatarMoeda(saldo);
+                saldoEl.className = 'card-value ' + (saldo >= 0 ? 'positive' : 'negative');
+            }
+
+            const credito = Math.max(0, limiteCredito - totalFaturasNaoPagas);
+            const creditoEl = document.getElementById('creditoDisponivel');
+            if (creditoEl) {
+                creditoEl.textContent = formatarMoeda(credito);
+                creditoEl.className = 'card-value ' + (credito > 0 ? 'positive' : credito === 0 ? 'neutral' : 'negative');
+            }
+
+            const totalRes = reservas.reduce((s, r) => s + r.valor, 0);
+            const totalReservasEl = document.getElementById('totalReservas');
+            if (totalReservasEl) totalReservasEl.textContent = formatarMoeda(totalRes);
+
+            // Contas a vencer
+            const hojeStr = hoje();
+            const limiteVenc = new Date();
+            limiteVenc.setDate(limiteVenc.getDate() + 7);
+            const limiteStr = limiteVenc.toISOString().slice(0, 10);
+
+            const proximas = [];
+            lancamentos.forEach(l => {
+                if (l.tipo === 'despesa' && l.parcelas && l.parcelas.length > 0) {
+                    l.parcelas.forEach((p, idx) => {
+                        const parcelasPagas = l.parcelasPagas || [];
+                        if (!parcelasPagas.includes(idx) && p >= hojeStr && p <= limiteStr) {
+                            const valorParcela = l.valor / l.parcelas.length;
+                            proximas.push({
+                                id: l.id,
+                                parcelaIndex: idx,
+                                desc: l.descricao + (l.parcelas.length > 1 ? ` (${idx+1}/${l.parcelas.length})` : ''),
+                                data: p,
+                                valor: valorParcela,
+                                moeda: l.moeda || MOEDA_PADRAO,
+                                pago: false
+                            });
+                        }
+                    });
+                } else if (l.tipo === 'despesa' && !l.pago && l.data >= hojeStr && l.data <= limiteStr) {
+                    proximas.push({
+                        id: l.id,
+                        parcelaIndex: undefined,
+                        desc: l.descricao,
+                        data: l.data,
+                        valor: l.valor,
+                        moeda: l.moeda || MOEDA_PADRAO,
+                        pago: l.pago || false
+                    });
+                }
+            });
+
+            proximas.sort((a, b) => a.data.localeCompare(b.data));
+
+            const vencerList = document.getElementById('vencerList');
+            if (vencerList) {
+                vencerList.innerHTML = '';
+                if (proximas.length === 0) {
+                    vencerList.innerHTML = '<div class="empty-message">Nenhuma conta próxima do vencimento.</div>';
+                } else {
+                    proximas.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'vencer-item';
+                        const isPago = item.pago || false;
+                        div.innerHTML = `
+                                <span class="desc">${item.desc}</span>
+                                <span class="date">📅 ${dataParaStr(item.data)}</span>
+                                <span class="value">${formatarMoeda(item.valor, item.moeda)}</span>
+                                <button class="btn-pago ${isPago ? 'pago' : ''}" 
+                                        data-id="${item.id}" 
+                                        data-parcela="${item.parcelaIndex !== undefined ? item.parcelaIndex : ''}"
+                                        onclick="window.togglePagoHandler('${item.id}', ${item.parcelaIndex !== undefined ? item.parcelaIndex : 'undefined'})">
+                                    ${isPago ? '✅ Pago' : '❌ Marcar Pago'}
+                                </button>
+                            `;
+                        vencerList.appendChild(div);
+                    });
+                }
+            }
+        }
+
+        function renderizarTabela() {
+            const tabelaBody = document.getElementById('tabelaLancamentos');
+            if (!tabelaBody) return;
+
+            const tipoFiltro = document.getElementById('filtroTipo')?.value || 'todos';
+            const mesFiltro = document.getElementById('filtroMes')?.value || '';
+            const catFiltro = document.getElementById('filtroCategoria')?.value || 'todas';
+            const moedaFiltro = document.getElementById('filtroMoeda')?.value || 'todas';
+
+            let filtrados = [...lancamentos];
+
+            if (tipoFiltro !== 'todos') {
+                filtrados = filtrados.filter(l => l.tipo === tipoFiltro);
+            }
+
+            if (catFiltro !== 'todas' && catFiltro) {
+                filtrados = filtrados.filter(l => l.categoria === catFiltro);
+            }
+
+            if (moedaFiltro !== 'todas' && moedaFiltro) {
+                filtrados = filtrados.filter(l => (l.moeda || MOEDA_PADRAO) === moedaFiltro);
+            }
+
+            if (mesFiltro) {
+                const [ano, mes] = mesFiltro.split('-').map(Number);
+                filtrados = filtrados.filter(l => {
+                    const d = new Date(l.data + 'T00:00:00');
+                    return d.getFullYear() === ano && (d.getMonth() + 1) === mes;
+                });
+            }
+
+            filtrados.sort((a, b) => b.data.localeCompare(a.data));
+
+            tabelaBody.innerHTML = '';
+            if (filtrados.length === 0) {
+                tabelaBody.innerHTML =
+                    '<tr><td colspan="9" style="text-align:center; color:var(--text-light);">Nenhum lançamento encontrado.</td></tr>';
+                return;
+            }
+
+            filtrados.forEach((l) => {
+                const tr = document.createElement('tr');
+                const totalParcelas = l.parcelas ? l.parcelas.length : 1;
+                const valorParcela = l.valor / totalParcelas;
+                const moeda = l.moeda || MOEDA_PADRAO;
+
+                const tipos = {
+                    'receita': { label: 'Receita', badge: 'badge-receita', class: 'text-success' },
+                    'despesa': { label: 'Despesa', badge: 'badge-despesa', class: 'text-danger' },
+                    'aumento_limite': { label: '📈 Aumento de Limite', badge: 'badge-aumento',
+                        class: 'text-info' },
+                    'fatura': { label: '💳 Fatura', badge: 'badge-fatura', class: 'text-warning' }
+                };
+
+                const info = tipos[l.tipo] || tipos['despesa'];
+                const simbolo = getSimboloMoeda(moeda);
+
+                let statusHtml = '';
+                if (l.tipo === 'fatura' || l.tipo === 'despesa') {
+                    const isPago = l.pago || false;
+                    if (isPago) {
+                        statusHtml = '<span class="badge badge-pago">✅ Pago</span>';
+                    } else {
+                        statusHtml = `<button class="btn-pago" data-id="${l.id}" onclick="window.togglePagoHandler('${l.id}', undefined)">❌ Marcar Pago</button>`;
+                    }
+                } else {
+                    statusHtml = '-';
+                }
+
+                let parcelasHtml = '';
+                if (l.parcelas && l.parcelas.length > 0) {
+                    const parcelasPagas = l.parcelasPagas || [];
+                    parcelasHtml = l.parcelas.map((p, pIdx) => {
+                        const isPago = parcelasPagas.includes(pIdx);
+                        const valor = l.valor / l.parcelas.length;
+                        return `<span style="display:inline-block; margin:2px 4px; font-size:11px; ${isPago ? 'color:var(--primary-color);' : 'color:var(--danger-color);'}">
+                                ${isPago ? '✅' : '⬜'} ${dataParaStr(p)} (${formatarMoeda(valor, moeda)})
+                                <button class="btn-pago ${isPago ? 'pago' : ''}" style="padding:1px 6px; font-size:10px;" 
+                                        onclick="window.togglePagoHandler('${l.id}', ${pIdx})">
+                                    ${isPago ? 'Pago' : 'Pagar'}
+                                </button>
+                            </span>`;
+                    }).join('<br>');
+                }
+
+                tr.innerHTML = `
+                        <td>${dataParaStr(l.data)}</td>
+                        <td>${l.descricao}</td>
+                        <td><span class="badge ${info.badge}">${info.label}</span></td>
+                        <td>${l.categoria || '-'}</td>
+                        <td><span class="currency-badge">${simbolo} ${moeda}</span></td>
+                        <td class="${info.class} fw-bold">${formatarMoeda(l.valor, moeda)}</td>
+                        <td>${totalParcelas}x ${formatarMoeda(valorParcela, moeda)}${l.parcelas ? '<br><small>' + parcelasHtml + '</small>' : ''}</td>
+                        <td>${statusHtml}</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="window.excluirLancamento('${l.id}')">🗑️</button></td>
+                    `;
+                tabelaBody.appendChild(tr);
+            });
+        }
+
+        function renderizarReservas() {
+            const grid = document.getElementById('reservasGrid');
+            if (!grid) return;
+
+            grid.innerHTML = '';
+            if (reservas.length === 0) {
+                grid.innerHTML =
+                    '<div class="empty-message" style="grid-column:1/-1;">Nenhuma reserva cadastrada.</div>';
+                return;
+            }
+
+            const sorted = [...reservas].sort((a, b) => b.data.localeCompare(a.data));
+
+            sorted.forEach((r, idx) => {
+                const div = document.createElement('div');
+                div.className = 'reserva-card';
+                const moeda = r.moeda || MOEDA_PADRAO;
+                const simbolo = getSimboloMoeda(moeda);
+                div.innerHTML = `
+                        <div class="name">${r.nome}</div>
+                        <div class="value">${formatarMoeda(r.valor, moeda)}</div>
+                        <div class="currency">${simbolo} ${moeda}</div>
+                        <div class="date">📅 ${dataParaStr(r.data)}</div>
+                        <div class="card-actions">
+                            <button class="btn btn-edit btn-sm" onclick="abrirModalEdicaoReserva(${idx})">✏️ Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="excluirReserva(${idx})">🗑️</button>
+                        </div>
+                    `;
+                grid.appendChild(div);
+            });
+
+            setTimeout(() => {
+                desenharGraficoDistribuicaoReservas();
+            }, 100);
+        }
+
+        window.excluirReserva = function(idx) {
+            if (!confirm('Deseja realmente excluir esta reserva?')) return;
+            reservas.splice(idx, 1);
+            salvarReservasLocal();
+            salvarNoFirebase();
+            renderizarReservas();
+            renderizarInicio();
+        };
+
+        window.abrirModalEdicaoReserva = function(idx) {
+            if (idx < 0 || idx >= reservas.length) return;
+            const r = reservas[idx];
+
+            document.getElementById('editNomeReserva').value = r.nome;
+            document.getElementById('editMoedaReserva').value = r.moeda || MOEDA_PADRAO;
+            document.getElementById('editValorReserva').value = r.valor;
+            document.getElementById('editDataReserva').value = r.data;
+            document.getElementById('inputSaqueParcial').value = '';
+
+            document.getElementById('modalEditarReserva').classList.add('active');
+            document.getElementById('modalEditarReserva').dataset.idx = idx;
+        };
+
+        function salvarEdicaoReserva() {
+            const idx = parseInt(document.getElementById('modalEditarReserva').dataset.idx);
+            if (isNaN(idx) || idx < 0 || idx >= reservas.length) return;
+
+            const nome = document.getElementById('editNomeReserva').value.trim();
+            const moeda = document.getElementById('editMoedaReserva').value;
+            const valor = parseFloat(document.getElementById('editValorReserva').value);
+            const data = document.getElementById('editDataReserva').value;
+
+            if (!nome) { alert('Informe um nome para a reserva.'); return; }
+            if (isNaN(valor) || valor < 0) { alert('Informe um valor válido (maior ou igual a 0).'); return; }
+            if (!data) { alert('Informe a data.'); return; }
+
+            reservas[idx] = {
+                ...reservas[idx],
+                nome: nome,
+                moeda: moeda,
+                valor: valor,
+                data: data
+            };
+
+            salvarReservasLocal();
+            salvarNoFirebase();
+            document.getElementById('modalEditarReserva').classList.remove('active');
+            renderizarReservas();
+            renderizarInicio();
+        }
+
+        // ---------- GRÁFICOS ----------
+        function desenharGraficoDistribuicaoReservas() {
+            const canvas = document.getElementById('graficoDistribuicaoReservas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            if (window.chartDistribuicao) {
+                window.chartDistribuicao.destroy();
+                window.chartDistribuicao = null;
+            }
+
+            if (reservas.length === 0) return;
+
+            const labels = reservas.map(r => r.nome + ' (' + getSimboloMoeda(r.moeda || MOEDA_PADRAO) + ')');
+            const valores = reservas.map(r => r.valor);
+            const total = valores.reduce((a, b) => a + b, 0);
+
+            const cores = [
+                '#2ecc71', '#3498db', '#f39c12', '#e74c3c', '#9b59b6',
+                '#1abc9c', '#e67e22', '#95a5a6', '#2c3e50', '#16a085',
+                '#8e44ad', '#d35400', '#27ae60', '#2980b9', '#f1c40f'
+            ];
+
+            const isDark = document.body?.classList.contains('dark-mode') || false;
+
+            window.chartDistribuicao = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: valores,
+                        backgroundColor: cores.slice(0, labels.length),
+                        borderColor: isDark ? '#2d2d44' : '#ffffff',
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: isDark ? '#e9ecef' : '#1a1a2e',
+                                font: { size: 11 },
+                                padding: 12
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    const idx = context.dataIndex;
+                                    const moeda = reservas[idx]?.moeda || MOEDA_PADRAO;
+                                    const valorFormatado = formatarMoeda(context.parsed, moeda);
+                                    return context.label + ': ' + valorFormatado + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function desenharGraficoReceitasDespesas() {
+            const canvas = document.getElementById('graficoReceitasDespesas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            if (window.chartReceitasDespesas) {
+                window.chartReceitasDespesas.destroy();
+                window.chartReceitasDespesas = null;
+            }
+
+            const dataInicio = document.getElementById('statsDataInicio')?.value || '';
+            const dataFim = document.getElementById('statsDataFim')?.value || '';
+
+            let filtrados = [...lancamentos];
+
+            if (dataInicio) {
+                filtrados = filtrados.filter(l => l.data >= dataInicio);
+            }
+            if (dataFim) {
+                filtrados = filtrados.filter(l => l.data <= dataFim);
+            }
+
+            const totalReceitas = filtrados
+                .filter(l => l.tipo === 'receita')
+                .reduce((s, l) => s + l.valor, 0);
+
+            const totalDespesas = filtrados
+                .filter(l => l.tipo === 'despesa')
+                .reduce((s, l) => s + l.valor, 0);
+
+            const isDark = document.body?.classList.contains('dark-mode') || false;
+
+            if (totalReceitas === 0 && totalDespesas === 0) return;
+
+            window.chartReceitasDespesas = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Receitas', 'Despesas'],
+                    datasets: [{
+                        data: [totalReceitas, totalDespesas],
+                        backgroundColor: ['#2ecc71', '#e74c3c'],
+                        borderColor: isDark ? '#2d2d44' : '#ffffff',
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: isDark ? '#e9ecef' : '#1a1a2e',
+                                font: { size: 12 },
+                                padding: 16
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return context.label + ': ' + formatarMoeda(context.parsed) + ' (' +
+                                        percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function desenharGraficoDespesasCategorias() {
+            const canvas = document.getElementById('graficoDespesasCategorias');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            if (window.chartDespesasCategorias) {
+                window.chartDespesasCategorias.destroy();
+                window.chartDespesasCategorias = null;
+            }
+
+            const dataInicio = document.getElementById('statsDataInicio')?.value || '';
+            const dataFim = document.getElementById('statsDataFim')?.value || '';
+
+            let filtrados = [...lancamentos];
+
+            if (dataInicio) {
+                filtrados = filtrados.filter(l => l.data >= dataInicio);
+            }
+            if (dataFim) {
+                filtrados = filtrados.filter(l => l.data <= dataFim);
+            }
+
+            const despesas = filtrados.filter(l => l.tipo === 'despesa');
+
+            if (despesas.length === 0) return;
+
+            const categoriasDespesas = {};
+            despesas.forEach(l => {
+                const cat = l.categoria || 'Sem categoria';
+                categoriasDespesas[cat] = (categoriasDespesas[cat] || 0) + l.valor;
+            });
+
+            const labels = Object.keys(categoriasDespesas);
+            const valores = Object.values(categoriasDespesas);
+
+            const cores = [
+                '#e74c3c', '#f39c12', '#3498db', '#9b59b6', '#1abc9c',
+                '#e67e22', '#95a5a6', '#2ecc71', '#e74c3c', '#3498db',
+                '#f1c40f', '#2c3e50', '#8e44ad', '#16a085', '#d35400'
+            ];
+
+            const isDark = document.body?.classList.contains('dark-mode') || false;
+
+            window.chartDespesasCategorias = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: valores,
+                        backgroundColor: cores.slice(0, labels.length),
+                        borderColor: isDark ? '#2d2d44' : '#ffffff',
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: isDark ? '#e9ecef' : '#1a1a2e',
+                                font: { size: 11 },
+                                padding: 12
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return context.label + ': ' + formatarMoeda(context.parsed) + ' (' +
+                                        percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderizarEstatisticas() {
+            const dataInicio = document.getElementById('statsDataInicio')?.value || '';
+            const dataFim = document.getElementById('statsDataFim')?.value || '';
+
+            let filtrados = [...lancamentos];
+
+            if (dataInicio) {
+                filtrados = filtrados.filter(l => l.data >= dataInicio);
+            }
+            if (dataFim) {
+                filtrados = filtrados.filter(l => l.data <= dataFim);
+            }
+
+            const totalReceitas = filtrados
+                .filter(l => l.tipo === 'receita')
+                .reduce((s, l) => s + l.valor, 0);
+
+            const totalDespesas = filtrados
+                .filter(l => l.tipo === 'despesa')
+                .reduce((s, l) => s + l.valor, 0);
+
+            const totalFaturas = filtrados
+                .filter(l => l.tipo === 'fatura')
+                .reduce((s, l) => s + l.valor, 0);
+
+            // Saldo considera apenas parcelas NÃO PAGAS
+            let totalParcelasFaturasNaoPagas = 0;
+            filtrados.forEach(l => {
+                if (l.tipo === 'fatura' && l.parcelas && l.parcelas.length > 0) {
+                    l.parcelas.forEach((p, idx) => {
+                        const parcelasPagas = l.parcelasPagas || [];
+                        if (!parcelasPagas.includes(idx)) {
+                            const valorParcela = l.valor / l.parcelas.length;
+                            totalParcelasFaturasNaoPagas += valorParcela;
+                        }
+                    });
+                }
+            });
+
+            let totalDespesasParceladasNaoPagas = 0;
+            filtrados.forEach(l => {
+                if (l.tipo === 'despesa' && l.parcelas && l.parcelas.length > 0) {
+                    l.parcelas.forEach((p, idx) => {
+                        const parcelasPagas = l.parcelasPagas || [];
+                        if (!parcelasPagas.includes(idx)) {
+                            const valorParcela = l.valor / l.parcelas.length;
+                            totalDespesasParceladasNaoPagas += valorParcela;
+                        }
+                    });
+                }
+            });
+
+            const totalDespesasGeral = totalDespesas + totalDespesasParceladasNaoPagas;
+            const saldo = totalReceitas - totalDespesasGeral - totalParcelasFaturasNaoPagas;
+
+            const el1 = document.getElementById('statTotalReceitas');
+            const el2 = document.getElementById('statTotalDespesas');
+            const el3 = document.getElementById('statTotalFaturas');
+            const el4 = document.getElementById('statSaldo');
+            const el5 = document.getElementById('statTotalLancamentos');
+
+            if (el1) el1.textContent = formatarMoeda(totalReceitas);
+            if (el2) el2.textContent = formatarMoeda(totalDespesas);
+            if (el3) el3.textContent = formatarMoeda(totalFaturas);
+
+            if (el4) {
+                el4.textContent = formatarMoeda(saldo);
+                el4.className = 'value ' + (saldo >= 0 ? 'positive' : 'negative');
+            }
+
+            if (el5) el5.textContent = filtrados.length;
+
+            // Tabela resumo
+            const despesas = filtrados.filter(l => l.tipo === 'despesa');
+            const categoriasDespesas = {};
+            despesas.forEach(l => {
+                const cat = l.categoria || 'Sem categoria';
+                categoriasDespesas[cat] = (categoriasDespesas[cat] || 0) + l.valor;
+            });
+
+            const tbody = document.getElementById('tabelaResumoCategorias');
+            const sortedCats = Object.entries(categoriasDespesas).sort((a, b) => b[1] - a[1]);
+            const totalDesp = Object.values(categoriasDespesas).reduce((a, b) => a + b, 0);
+
+            if (tbody) {
+                if (sortedCats.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-light);">Nenhum dado disponível.</td></tr>';
+                } else {
+                    tbody.innerHTML = sortedCats.map(([cat, valor]) => {
+                        const pct = totalDesp > 0 ? ((valor / totalDesp) * 100).toFixed(1) : 0;
+                        return `<tr>
+                                <td>${cat}</td>
+                                <td>${formatarMoeda(valor)}</td>
+                                <td>${pct}%</td>
+                            </tr>`;
+                    }).join('');
+                }
+            }
+
+            desenharGraficoReceitasDespesas();
+            desenharGraficoDespesasCategorias();
+        }
+
+        // ---------- FUNÇÃO PRINCIPAL ----------
+        function renderizarTudo() {
+            renderizarCategorias();
+            renderizarInicio();
+            renderizarTabela();
+            renderizarReservas();
+            renderizarEstatisticas();
+            renderizarCalendario();
+            renderizarMetas();
+        }
+
+        // ---------- INICIALIZAR SISTEMA ----------
+        function inicializarSistema(user) {
+            currentUser = user;
+            carregarDadosLocal();
+
+            // Configurar data no header
+            const headerDate = document.getElementById('headerDate');
+            if (headerDate) {
+                headerDate.textContent = new Date().toLocaleDateString('pt-BR', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+            }
+
+            carregarDoFirebase(user);
+
+            // Eventos
+            document.getElementById('btnAddLancamento').addEventListener('click', adicionarLancamento);
+            document.getElementById('btnAddReserva').addEventListener('click', adicionarReserva);
+            document.getElementById('btnAddCategoria').addEventListener('click', adicionarCategoria);
+            document.getElementById('btnAddMeta').addEventListener('click', adicionarMeta);
+            document.getElementById('btnSalvarEdicaoMeta').addEventListener('click', salvarEdicaoMeta);
+            document.getElementById('btnCancelarEdicaoMeta').addEventListener('click', function() {
+                document.getElementById('modalEditarMeta').classList.remove('active');
+            });
+            document.getElementById('btnSalvarEdicao').addEventListener('click', salvarEdicaoReserva);
+            document.getElementById('btnCancelarEdicao').addEventListener('click', function() {
+                document.getElementById('modalEditarReserva').classList.remove('active');
+            });
+            document.getElementById('btnSaqueParcial').addEventListener('click', function() {
+                const idx = parseInt(document.getElementById('modalEditarReserva').dataset.idx);
+                if (isNaN(idx) || idx < 0 || idx >= reservas.length) return;
+                const valorSaque = parseFloat(document.getElementById('inputSaqueParcial').value);
+                const reservaAtual = reservas[idx];
+                const moeda = reservaAtual.moeda || MOEDA_PADRAO;
+
+                if (isNaN(valorSaque) || valorSaque <= 0) {
+                    alert('Informe um valor de saque válido.');
+                    return;
+                }
+
+                if (valorSaque > reservaAtual.valor) {
+                    alert(`Saldo insuficiente. Você tem ${formatarMoeda(reservaAtual.valor, moeda)} disponível.`);
+                    return;
+                }
+
+                const novoValor = reservaAtual.valor - valorSaque;
+                document.getElementById('editValorReserva').value = novoValor;
+                document.getElementById('inputSaqueParcial').value = '';
+
+                alert(`✅ Saque de ${formatarMoeda(valorSaque, moeda)} realizado com sucesso!\nNovo saldo: ${formatarMoeda(novoValor, moeda)}`);
+            });
+            document.getElementById('btnSaqueTotal').addEventListener('click', function() {
+                const idx = parseInt(document.getElementById('modalEditarReserva').dataset.idx);
+                if (isNaN(idx) || idx < 0 || idx >= reservas.length) return;
+                const reservaAtual = reservas[idx];
+                const moeda = reservaAtual.moeda || MOEDA_PADRAO;
+
+                if (!confirm(`Deseja realmente sacar o valor total de ${formatarMoeda(reservaAtual.valor, moeda)} da reserva "${reservaAtual.nome}"?`)) {
+                    return;
+                }
+
+                document.getElementById('editValorReserva').value = 0;
+                document.getElementById('inputSaqueParcial').value = '';
+
+                alert(`✅ Saque total de ${formatarMoeda(reservaAtual.valor, moeda)} realizado com sucesso!\nSaldo zerado.`);
+            });
+
+            document.getElementById('btnExportarCSV').addEventListener('click', exportarCSV);
+            document.getElementById('btnExportarExcel').addEventListener('click', exportarExcel);
+            document.getElementById('btnImportarArquivo').addEventListener('click', importarDados);
+            document.getElementById('btnDarkMode').addEventListener('click', function() {
+                document.body.classList.toggle('dark-mode');
+                const isDark = document.body.classList.contains('dark-mode');
+                this.textContent = isDark ? '☀️' : '🌙';
+                localStorage.setItem(STORAGE_DARKMODE, isDark);
                 setTimeout(() => {
                     desenharGraficoDistribuicaoReservas();
                     desenharGraficoReceitasDespesas();
                     desenharGraficoDespesasCategorias();
+                }, 100);
+            });
+
+            document.getElementById('btnZerarDados').addEventListener('click', function() {
+                if (!confirm('⚠️ ATENÇÃO! Você está prestes a APAGAR TODOS OS DADOS! Esta ação é IRREVERSÍVEL! Deseja continuar?')) return;
+                if (!confirm('🔴 ÚLTIMA CHANCE! Todos os seus dados serão PERMANENTEMENTE EXCLUÍDOS. Tem certeza?')) return;
+
+                lancamentos = [];
+                reservas = [];
+                metas = [];
+                categorias = ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'];
+                limiteCredito = 0;
+
+                salvarDadosLocal();
+                salvarNoFirebase();
+                renderizarTudo();
+                alert('✅ Todos os dados foram zerados com sucesso!');
+            });
+
+            // Calendário
+            document.getElementById('btnMesAnterior').addEventListener('click', function() {
+                calendarioData.setMonth(calendarioData.getMonth() - 1);
+                renderizarCalendario();
+            });
+            document.getElementById('btnMesProximo').addEventListener('click', function() {
+                calendarioData.setMonth(calendarioData.getMonth() + 1);
+                renderizarCalendario();
+            });
+
+            // Filtros
+            document.getElementById('filtroTipo').addEventListener('change', renderizarTabela);
+            document.getElementById('filtroMes').addEventListener('change', renderizarTabela);
+            document.getElementById('filtroCategoria').addEventListener('change', renderizarTabela);
+            document.getElementById('filtroMoeda').addEventListener('change', renderizarTabela);
+
+            document.getElementById('btnLimparFiltros').addEventListener('click', function() {
+                document.getElementById('filtroTipo').value = 'todos';
+                document.getElementById('filtroMes').value = '';
+                document.getElementById('filtroCategoria').value = 'todas';
+                document.getElementById('filtroMoeda').value = 'todas';
+                renderizarTabela();
+            });
+
+            // Filtros de data
+            document.getElementById('btnAplicarFiltroData').addEventListener('click', function() {
+                renderizarEstatisticas();
+            });
+            document.getElementById('btnLimparFiltroData').addEventListener('click', function() {
+                document.getElementById('statsDataInicio').value = '';
+                document.getElementById('statsDataFim').value = '';
+                renderizarEstatisticas();
+            });
+
+            // Enter
+            document.getElementById('valorLancamento').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') adicionarLancamento();
+            });
+            document.getElementById('valorReserva').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') adicionarReserva();
+            });
+            document.getElementById('novaCategoria').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') adicionarCategoria();
+            });
+            document.getElementById('metaNome').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') adicionarMeta();
+            });
+            document.getElementById('metaValorAlvo').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') adicionarMeta();
+            });
+
+            // Redimensionar
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    desenharGraficoDistribuicaoReservas();
+                    desenharGraficoReceitasDespesas();
+                    desenharGraficoDespesasCategorias();
                 }, 200);
+            });
+        }
+
+        window.inicializarSistema = inicializarSistema;
+
+        // ---------- EXPORTAÇÃO/IMPORTAÇÃO ----------
+        function getDadosExportacao() {
+            const lancData = lancamentos.map(l => ({
+                'Data': l.data,
+                'Descrição': l.descricao,
+                'Tipo': l.tipo,
+                'Categoria': l.categoria || '',
+                'Moeda': l.moeda || MOEDA_PADRAO,
+                'Valor': l.valor,
+                'Parcelas': l.parcelas ? l.parcelas.join('|') : '',
+                'Parcelas Pagas': l.parcelasPagas ? l.parcelasPagas.join('|') : '',
+                'Pago': l.pago ? 'Sim' : 'Não'
+            }));
+
+            const reservasData = reservas.map(r => ({
+                'Nome': r.nome,
+                'Moeda': r.moeda || MOEDA_PADRAO,
+                'Valor': r.valor,
+                'Data': r.data
+            }));
+
+            const categoriasData = categorias.map(c => ({
+                'Categoria': c
+            }));
+
+            const metasData = metas.map(m => ({
+                'Nome': m.nome,
+                'Valor Alvo': m.valorAlvo,
+                'Valor Atual': m.valorAtual,
+                'Prazo': m.prazo || '',
+                'Progresso': m.valorAlvo > 0 ? ((m.valorAtual / m.valorAlvo) * 100).toFixed(1) + '%' : '0%'
+            }));
+
+            return { lancamentos: lancData, reservas: reservasData, categorias: categoriasData, metas: metasData };
+        }
+
+        function exportarCSV() {
+            const dados = getDadosExportacao();
+            if (dados.lancamentos.length === 0 && dados.reservas.length === 0 && dados.metas.length === 0) {
+                alert('Nenhum dado para exportar.');
+                return;
             }
 
-            // ---------- FUNÇÕES DE RENDERIZAÇÃO (resumidas) ----------
-            function renderizarCategorias() {
-                // ... (mantido da versão anterior)
+            let csvContent = '';
+            csvContent += '=== LANÇAMENTOS ===\n';
+            const lancHeaders = ['Data', 'Descrição', 'Tipo', 'Categoria', 'Moeda', 'Valor', 'Parcelas', 'Parcelas Pagas',
+                'Pago'
+            ];
+            csvContent += lancHeaders.join(',') + '\n';
+            dados.lancamentos.forEach(l => {
+                csvContent += [
+                    l.Data,
+                    `"${l.Descrição}"`,
+                    l.Tipo,
+                    `"${l.Categoria}"`,
+                    l.Moeda,
+                    l.Valor,
+                    `"${l.Parcelas}"`,
+                    `"${l['Parcelas Pagas']}"`,
+                    l.Pago
+                ].join(',') + '\n';
+            });
+
+            csvContent += '\n=== RESERVAS ===\n';
+            const resHeaders = ['Nome', 'Moeda', 'Valor', 'Data'];
+            csvContent += resHeaders.join(',') + '\n';
+            dados.reservas.forEach(r => {
+                csvContent += [`"${r.Nome}"`, r.Moeda, r.Valor, r.Data].join(',') + '\n';
+            });
+
+            csvContent += '\n=== CATEGORIAS ===\n';
+            csvContent += 'Categoria\n';
+            dados.categorias.forEach(c => {
+                csvContent += `"${c.Categoria}"\n`;
+            });
+
+            csvContent += '\n=== METAS ===\n';
+            const metaHeaders = ['Nome', 'Valor Alvo', 'Valor Atual', 'Prazo', 'Progresso'];
+            csvContent += metaHeaders.join(',') + '\n';
+            dados.metas.forEach(m => {
+                csvContent += [
+                    `"${m.Nome}"`,
+                    m['Valor Alvo'],
+                    m['Valor Atual'],
+                    `"${m.Prazo}"`,
+                    `"${m.Progresso}"`
+                ].join(',') + '\n';
+            });
+
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `dados_completos_${hoje()}.csv`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        function exportarExcel() {
+            const dados = getDadosExportacao();
+            if (dados.lancamentos.length === 0 && dados.reservas.length === 0 && dados.metas.length === 0) {
+                alert('Nenhum dado para exportar.');
+                return;
             }
 
-            function renderizarInicio() {
-                // ... (mantido da versão anterior)
-            }
+            try {
+                const wb = XLSX.utils.book_new();
 
-            function renderizarTabela() {
-                // ... (mantido da versão anterior)
-            }
+                const wsLanc = XLSX.utils.json_to_sheet(dados.lancamentos);
+                XLSX.utils.book_append_sheet(wb, wsLanc, 'Lançamentos');
 
-            function renderizarReservas() {
-                // ... (mantido da versão anterior)
-            }
+                const wsRes = XLSX.utils.json_to_sheet(dados.reservas);
+                XLSX.utils.book_append_sheet(wb, wsRes, 'Reservas');
 
-            function renderizarEstatisticas() {
-                // ... (mantido da versão anterior)
-            }
+                const wsCat = XLSX.utils.json_to_sheet(dados.categorias);
+                XLSX.utils.book_append_sheet(wb, wsCat, 'Categorias');
 
-            function desenharGraficoDistribuicaoReservas() {
-                // ... (mantido da versão anterior)
-            }
+                const wsMeta = XLSX.utils.json_to_sheet(dados.metas);
+                XLSX.utils.book_append_sheet(wb, wsMeta, 'Metas');
 
-            function desenharGraficoReceitasDespesas() {
-                // ... (mantido da versão anterior)
-            }
-
-            function desenharGraficoDespesasCategorias() {
-                // ... (mantido da versão anterior)
-            }
-
-            // ---------- EVENTOS ----------
-            function initEventos() {
-                // Calendário
-                document.getElementById('btnMesAnterior').addEventListener('click', function() {
-                    calendarioData.setMonth(calendarioData.getMonth() - 1);
-                    renderizarCalendario();
-                });
-
-                document.getElementById('btnMesProximo').addEventListener('click', function() {
-                    calendarioData.setMonth(calendarioData.getMonth() + 1);
-                    renderizarCalendario();
-                });
-
-                // Metas
-                document.getElementById('btnAddMeta').addEventListener('click', adicionarMeta);
-                document.getElementById('btnSalvarEdicaoMeta').addEventListener('click', salvarEdicaoMeta);
-                document.getElementById('btnCancelarEdicaoMeta').addEventListener('click', function() {
-                    document.getElementById('modalEditarMeta').classList.remove('active');
-                });
-
-                // Lançamentos
-                document.getElementById('btnAddLancamento').addEventListener('click', adicionarLancamento);
-
-                // ... (outros eventos mantidos)
-            }
-
-            // ---------- AUTENTICAÇÃO ----------
-            function initAuth() {
-                // ... (mantido da versão anterior com Firebase Auth)
-            }
-
-            // ---------- INICIALIZAÇÃO ----------
-            function init() {
-                carregarDadosLocal();
-
-                // Verificar autenticação
-                auth.onAuthStateChanged(function(user) {
-                    if (user) {
-                        currentUser = user;
-                        document.getElementById('authContainer').style.display = 'none';
-                        document.getElementById('appContainer').classList.add('active');
-
-                        const name = user.displayName || user.email || 'Usuário';
-                        const initial = name.charAt(0).toUpperCase();
-                        document.getElementById('userAvatar').textContent = initial;
-                        document.getElementById('userNameDisplay').textContent = name;
-
-                        carregarDoFirebase(user);
-                    } else {
-                        document.getElementById('authContainer').style.display = 'block';
-                        document.getElementById('appContainer').classList.remove('active');
+                [wsLanc, wsRes, wsCat, wsMeta].forEach(ws => {
+                    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+                    const colWidths = {};
+                    for (let R = range.s.r; R <= range.e.r; R++) {
+                        for (let C = range.s.c; C <= range.e.c; C++) {
+                            const addr = XLSX.utils.encode_cell({ r: R, c: C });
+                            const cell = ws[addr];
+                            if (cell && cell.v) {
+                                const len = String(cell.v).length;
+                                const col = XLSX.utils.encode_col(C);
+                                colWidths[col] = Math.max(colWidths[col] || 10, Math.min(len + 4, 50));
+                            }
+                        }
                     }
+                    ws['!cols'] = Object.keys(colWidths).map(c => ({ wch: colWidths[c] }));
                 });
 
-                initEventos();
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/octet-stream' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `dados_completos_${hoje()}.xlsx`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+            } catch (error) {
+                console.error('Erro ao exportar Excel:', error);
+                alert('Erro ao exportar Excel. Verifique o console para mais detalhes.');
+            }
+        }
 
-                // Data no header
-                const headerDate = document.getElementById('headerDate');
-                if (headerDate) {
-                    headerDate.textContent = new Date().toLocaleDateString('pt-BR', {
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric'
-                    });
-                }
+        function importarDados() {
+            const file = document.getElementById('fileInput')?.files[0];
+            if (!file) {
+                alert('Selecione um arquivo para importar.');
+                return;
             }
 
-            // Inicializar
-            document.addEventListener('DOMContentLoaded', init);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    let lancamentosImportados = [];
+                    let reservasImportadas = [];
+                    let categoriasImportadas = [];
+                    let metasImportadas = [];
+                    const fileName = file.name.toLowerCase();
+                    const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
 
-        })();
+                    if (isExcel) {
+                        const data = new Uint8Array(content);
+                        const workbook = XLSX.read(data, { type: 'array' });
+
+                        if (workbook.SheetNames.includes('Lançamentos')) {
+                            const sheet = workbook.Sheets['Lançamentos'];
+                            lancamentosImportados = XLSX.utils.sheet_to_json(sheet);
+                        }
+                        if (workbook.SheetNames.includes('Reservas')) {
+                            const sheet = workbook.Sheets['Reservas'];
+                            reservasImportadas = XLSX.utils.sheet_to_json(sheet);
+                        }
+                        if (workbook.SheetNames.includes('Categorias')) {
+                            const sheet = workbook.Sheets['Categorias'];
+                            categoriasImportadas = XLSX.utils.sheet_to_json(sheet).map(row => row.Categoria || row
+                                .categoria || '').filter(Boolean);
+                        }
+                        if (workbook.SheetNames.includes('Metas')) {
+                            const sheet = workbook.Sheets['Metas'];
+                            metasImportadas = XLSX.utils.sheet_to_json(sheet);
+                        }
+                    } else {
+                        const lines = content.split('\n').filter(line => line.trim());
+                        let currentSection = '';
+                        let headers = [];
+
+                        for (let i = 0; i < lines.length; i++) {
+                            const line = lines[i].trim();
+                            if (line.startsWith('=== ')) {
+                                currentSection = line.replace(/===/g, '').trim();
+                                continue;
+                            }
+                            if (!line) continue;
+
+                            const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+
+                            if (values.every(v => v && !isNaN(v) === false) && i < lines.length - 1) {
+                                headers = values;
+                                continue;
+                            }
+
+                            if (currentSection === 'LANÇAMENTOS' && headers.length > 0 && values.length >= headers
+                                .length) {
+                                const obj = {};
+                                headers.forEach((h, idx) => { obj[h] = values[idx] || ''; });
+                                if (obj.Parcelas && typeof obj.Parcelas === 'string' && obj.Parcelas.includes('|')) {
+                                    obj.Parcelas = obj.Parcelas.split('|');
+                                } else if (obj.Parcelas) {
+                                    obj.Parcelas = [obj.Parcelas];
+                                }
+                                if (obj['Parcelas Pagas'] && typeof obj['Parcelas Pagas'] === 'string' && obj[
+                                    'Parcelas Pagas'].includes('|')) {
+                                    obj['Parcelas Pagas'] = obj['Parcelas Pagas'].split('|').map(Number);
+                                } else if (obj['Parcelas Pagas']) {
+                                    obj['Parcelas Pagas'] = [parseInt(obj['Parcelas Pagas'])];
+                                } else {
+                                    obj['Parcelas Pagas'] = [];
+                                }
+                                if (obj.Valor) obj.Valor = parseFloat(obj.Valor) || 0;
+                                lancamentosImportados.push(obj);
+                            }
+
+                            if (currentSection === 'RESERVAS' && headers.length > 0 && values.length >= headers
+                                .length) {
+                                const obj = {};
+                                headers.forEach((h, idx) => { obj[h] = values[idx] || ''; });
+                                if (obj.Valor) obj.Valor = parseFloat(obj.Valor) || 0;
+                                reservasImportadas.push(obj);
+                            }
+
+                            if (currentSection === 'CATEGORIAS' && values.length > 0) {
+                                const cat = values[0] || values[1] || '';
+                                if (cat) categoriasImportadas.push(cat);
+                            }
+
+                            if (currentSection === 'METAS' && headers.length > 0 && values.length >= headers.length) {
+                                const obj = {};
+                                headers.forEach((h, idx) => { obj[h] = values[idx] || ''; });
+                                if (obj['Valor Alvo']) obj['Valor Alvo'] = parseFloat(obj['Valor Alvo']) || 0;
+                                if (obj['Valor Atual']) obj['Valor Atual'] = parseFloat(obj['Valor Atual']) || 0;
+                                metasImportadas.push(obj);
+                            }
+
+                            if (values.some(v => v && !isNaN(v))) {
+                                headers = [];
+                            }
+                        }
+                    }
+
+                    let importados = 0;
+                    let reservasImp = 0;
+                    let categoriasImp = 0;
+                    let metasImp = 0;
+
+                    if (lancamentosImportados.length > 0) {
+                        lancamentosImportados.forEach(l => {
+                            if (l.Data && l.Descrição && l.Valor) {
+                                const parcelas = l.Parcelas && Array.isArray(l.Parcelas) ?
+                                    l.Parcelas :
+                                    l.Parcelas ? [l.Parcelas] :
+                                    [l.Data];
+                                const parcelasPagas = l['Parcelas Pagas'] || [];
+                                lancamentos.push({
+                                    id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+                                    tipo: l.Tipo || 'despesa',
+                                    moeda: l.Moeda || MOEDA_PADRAO,
+                                    categoria: l.Categoria || 'Sem categoria',
+                                    descricao: l.Descrição,
+                                    valor: l.Valor,
+                                    data: l.Data,
+                                    parcelas: parcelas,
+                                    parcelasPagas: parcelasPagas,
+                                    pago: l.Pago === 'Sim' || false,
+                                    criadoEm: new Date().toISOString()
+                                });
+                                importados++;
+                            }
+                        });
+                        salvarLancamentosLocal();
+                    }
+
+                    if (reservasImportadas.length > 0) {
+                        reservasImportadas.forEach(r => {
+                            if (r.Nome && r.Valor && r.Data) {
+                                reservas.push({
+                                    id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+                                    nome: r.Nome,
+                                    moeda: r.Moeda || MOEDA_PADRAO,
+                                    valor: r.Valor,
+                                    data: r.Data,
+                                    criadoEm: new Date().toISOString()
+                                });
+                                reservasImp++;
+                            }
+                        });
+                        salvarReservasLocal();
+                    }
+
+                    if (categoriasImportadas.length > 0) {
+                        if (confirm(
+                                `Deseja substituir as categorias existentes (${categorias.length}) pelas importadas (${categoriasImportadas.length})?` +
+                                '\n\n"OK" = Substituir\n"Cancelar" = Mesclar')) {
+                            categorias = categoriasImportadas.filter(Boolean);
+                        } else {
+                            categoriasImportadas.forEach(c => {
+                                if (c && !categorias.includes(c)) categorias.push(c);
+                            });
+                        }
+                        salvarCategoriasLocal();
+                        categoriasImp = categoriasImportadas.length;
+                    }
+
+                    if (metasImportadas.length > 0) {
+                        metasImportadas.forEach(m => {
+                            if (m.Nome && m['Valor Alvo']) {
+                                metas.push({
+                                    id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+                                    nome: m.Nome,
+                                    valorAlvo: m['Valor Alvo'],
+                                    valorAtual: m['Valor Atual'] || 0,
+                                    prazo: m.Prazo || '',
+                                    criadoEm: new Date().toISOString()
+                                });
+                                metasImp++;
+                            }
+                        });
+                        salvarMetasLocal();
+                    }
+
+                    document.getElementById('fileInput').value = '';
+                    salvarNoFirebase();
+                    renderizarTudo();
+
+                    let msg = '✅ Importação concluída!\n\n';
+                    if (importados > 0) msg += `📄 Lançamentos: ${importados} importados\n`;
+                    if (reservasImp > 0) msg += `🏦 Reservas: ${reservasImp} importadas\n`;
+                    if (categoriasImp > 0) msg += `🏷️ Categorias: ${categoriasImp} processadas\n`;
+                    if (metasImp > 0) msg += `🎯 Metas: ${metasImp} importadas\n`;
+                    if (importados === 0 && reservasImp === 0 && metasImp === 0) {
+                        msg = '⚠️ Nenhum dado foi importado. Verifique o formato do arquivo.';
+                    }
+                    alert(msg);
+
+                } catch (error) {
+                    console.error('Erro ao importar:', error);
+                    alert('Erro ao importar arquivo. Verifique o formato e tente novamente.');
+                }
+            };
+
+            if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
+                reader.readAsArrayBuffer(file);
+            } else {
+                reader.readAsText(file, 'UTF-8');
+            }
+        }
+
+        // ---------- INICIALIZAÇÃO ----------
+        // O sistema é inicializado pelo onAuthStateChanged
     </script>
 
 </body>
