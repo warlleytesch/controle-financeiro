@@ -92,7 +92,7 @@
         }
 
         /* ============================
-                   PÁGINA DE LOGIN
+                   PÁGINA DE LOGIN / REGISTRO
                 ============================ */
         .auth-container {
             max-width: 420px;
@@ -183,12 +183,9 @@
             transform: scale(1.01);
         }
 
-        .auth-container .btn-auth.google {
-            background: #4285F4;
-        }
-
-        .auth-container .btn-auth.google:hover {
-            background: #357ae8;
+        .auth-container .btn-auth:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .auth-container .auth-link {
@@ -219,6 +216,20 @@
         }
 
         .auth-container .error-message.show {
+            display: block;
+        }
+
+        .auth-container .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .auth-container .success-message.show {
             display: block;
         }
 
@@ -269,6 +280,20 @@
             }
         }
 
+        .auth-container .demo-info {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-light);
+            padding: 12px;
+            background: var(--tab-bg);
+            border-radius: 10px;
+            margin-top: 8px;
+        }
+
+        .auth-container .demo-info strong {
+            color: var(--text-primary);
+        }
+
         /* ============================
                    APP CONTAINER (SISTEMA)
                 ============================ */
@@ -307,6 +332,7 @@
             display: flex;
             align-items: center;
             gap: 16px;
+            flex-wrap: wrap;
         }
 
         .header h1 {
@@ -349,6 +375,23 @@
         }
 
         .btn-darkmode:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-danger-header {
+            background: var(--danger-color);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-danger-header:hover {
+            background: var(--danger-dark);
             transform: scale(1.05);
         }
 
@@ -428,41 +471,8 @@
             }
         }
 
-        .currency-selector {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: var(--tab-bg);
-            padding: 4px 8px 4px 12px;
-            border-radius: 30px;
-            border: 1px solid var(--border-color);
-            transition: background 0.3s, border-color 0.3s;
-        }
-
-        .currency-selector label {
-            font-size: 12px;
-            color: var(--text-light);
-            font-weight: 600;
-        }
-
-        .currency-selector select {
-            background: transparent;
-            border: none;
-            padding: 4px 0;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-primary);
-            cursor: pointer;
-            outline: none;
-        }
-
-        .currency-selector select option {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-
         /* ============================
-                   RESTO DO CSS (mantido do sistema anterior)
+                   TABS (ABAS)
                 ============================ */
         .tabs {
             display: flex;
@@ -520,6 +530,9 @@
             }
         }
 
+        /* ============================
+                   CARDS (PÁGINA INICIAL)
+                ============================ */
         .cards-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -575,6 +588,9 @@
             transition: color 0.3s;
         }
 
+        /* ============================
+                   CONTAS A VENCER
+                ============================ */
         .section-title {
             font-size: 18px;
             font-weight: 600;
@@ -631,6 +647,9 @@
             text-align: center;
         }
 
+        /* ============================
+                   FORMULÁRIO (ABA CONTROLE)
+                ============================ */
         .form-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -764,6 +783,9 @@
             background: #5a6268;
         }
 
+        /* ============================
+                   TABELA DE LANÇAMENTOS
+                ============================ */
         .table-wrapper {
             overflow-x: auto;
             margin-top: 20px;
@@ -841,6 +863,20 @@
             font-weight: 600;
         }
 
+        /* Moeda */
+        .currency-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            background: var(--tab-bg);
+            color: var(--text-secondary);
+        }
+
+        /* ============================
+                   ABA RESERVAS
+                ============================ */
         .reservas-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -872,6 +908,11 @@
         .reserva-card .date {
             font-size: 12px;
             color: var(--text-light);
+        }
+        .reserva-card .currency {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 2px;
         }
 
         .reserva-card .card-actions {
@@ -912,6 +953,7 @@
             letter-spacing: 0.3px;
         }
 
+        /* Estilos para gráfico na aba Reservas */
         .reserva-chart-container {
             max-width: 500px;
             margin: 0 auto;
@@ -926,6 +968,7 @@
             max-height: 300px;
         }
 
+        /* Modal de Edição */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -974,7 +1017,8 @@
             margin-bottom: 4px;
         }
 
-        .modal .form-group input {
+        .modal .form-group input,
+        .modal .form-group select {
             width: 100%;
             padding: 10px 14px;
             border-radius: 10px;
@@ -985,7 +1029,8 @@
             transition: 0.2s;
         }
 
-        .modal .form-group input:focus {
+        .modal .form-group input:focus,
+        .modal .form-group select:focus {
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
@@ -1040,6 +1085,9 @@
             border-color: var(--primary-color);
         }
 
+        /* ============================
+                   GRÁFICOS
+                ============================ */
         .chart-container {
             background: var(--bg-card);
             border-radius: 16px;
@@ -1068,6 +1116,9 @@
             pointer-events: none;
         }
 
+        /* ============================
+                   ESTATÍSTICAS
+                ============================ */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -1142,6 +1193,9 @@
             color: #f39c12;
         }
 
+        /* ============================
+                   CATEGORIAS
+                ============================ */
         .categoria-form {
             display: flex;
             gap: 12px;
@@ -1195,6 +1249,9 @@
             transform: scale(1.2);
         }
 
+        /* ============================
+                   IMPORTAÇÃO/EXPORTAÇÃO
+                ============================ */
         .import-export-area {
             display: flex;
             gap: 12px;
@@ -1205,6 +1262,7 @@
             border-radius: 14px;
             align-items: center;
             transition: background 0.3s;
+            flex-wrap: wrap;
         }
 
         .import-export-area .divider {
@@ -1226,7 +1284,9 @@
             max-width: 200px;
         }
 
-        /* Responsivo */
+        /* ============================
+                   RESPONSIVO
+                ============================ */
         @media (max-width: 600px) {
             .app-container {
                 padding: 16px;
@@ -1289,14 +1349,9 @@
             .reserva-chart-container {
                 max-width: 100%;
             }
-            .currency-selector {
-                padding: 4px 6px 4px 10px;
-            }
-            .currency-selector label {
-                font-size: 11px;
-            }
-            .currency-selector select {
-                font-size: 12px;
+            .sync-status {
+                font-size: 10px;
+                padding: 2px 8px;
             }
             .user-info .avatar {
                 width: 28px;
@@ -1306,53 +1361,49 @@
             .user-info span:not(.avatar) {
                 font-size: 12px;
             }
-            .sync-status {
-                font-size: 10px;
-                padding: 2px 8px;
-            }
         }
     </style>
 </head>
 <body>
 
     <!-- ============================
-    TELA DE LOGIN
+    TELA DE LOGIN / REGISTRO
     ============================ -->
     <div class="auth-container" id="authContainer">
         <div class="logo">👑 <span>Império</span></div>
         <div class="subtitle">Controle Financeiro na Nuvem</div>
 
         <div class="error-message" id="authError"></div>
+        <div class="success-message" id="authSuccess"></div>
 
-        <!-- Login com Google -->
-        <button class="btn-auth google" id="btnGoogleLogin">
-            🔑 Entrar com Google
-        </button>
-
-        <div class="divider">ou</div>
-
-        <!-- Login com Email/Senha -->
+        <!-- Formulário de Login -->
         <div id="loginForm">
             <div class="form-group">
-                <label>📧 E-mail</label>
-                <input type="email" id="loginEmail" placeholder="seu@email.com" />
+                <label>👤 Usuário</label>
+                <input type="text" id="loginUsername" placeholder="Digite seu usuário" />
             </div>
             <div class="form-group">
                 <label>🔒 Senha</label>
-                <input type="password" id="loginPassword" placeholder="Sua senha" />
+                <input type="password" id="loginPassword" placeholder="Digite sua senha" />
             </div>
             <button class="btn-auth" id="btnLogin">Entrar</button>
+
+            <div class="divider">ou</div>
 
             <div class="auth-link">
                 Não tem uma conta? <a href="#" id="showRegister">Criar conta</a>
             </div>
+
+            <div class="demo-info">
+                🔑 <strong>Demonstração:</strong> usuário: <strong>demo</strong> | senha: <strong>demo123</strong>
+            </div>
         </div>
 
-        <!-- Registro -->
+        <!-- Formulário de Registro -->
         <div id="registerForm" style="display:none;">
             <div class="form-group">
-                <label>📧 E-mail</label>
-                <input type="email" id="registerEmail" placeholder="seu@email.com" />
+                <label>👤 Usuário</label>
+                <input type="text" id="registerUsername" placeholder="Escolha um usuário" />
             </div>
             <div class="form-group">
                 <label>🔒 Senha</label>
@@ -1363,6 +1414,8 @@
                 <input type="password" id="registerConfirmPassword" placeholder="Confirme sua senha" />
             </div>
             <button class="btn-auth" id="btnRegister">Criar Conta</button>
+
+            <div class="divider">ou</div>
 
             <div class="auth-link">
                 Já tem uma conta? <a href="#" id="showLogin">Fazer login</a>
@@ -1393,16 +1446,9 @@
                 </div>
             </div>
             <div class="header-actions">
-                <div class="currency-selector">
-                    <label>💱</label>
-                    <select id="currencySelector">
-                        <option value="BRL">R$ Real</option>
-                        <option value="USD">$ Dólar</option>
-                        <option value="AUD">AU$ Dólar Australiano</option>
-                    </select>
-                </div>
                 <div class="header-date" id="headerDate"></div>
                 <button class="btn-darkmode" id="btnDarkMode" title="Alternar tema">🌙</button>
+                <button class="btn-danger-header" id="btnZerarDados" title="Apagar todos os dados">🗑️ Zerar</button>
                 <button class="btn-logout" id="btnLogout">🚪 Sair</button>
             </div>
         </header>
@@ -1459,6 +1505,15 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label>Moeda</label>
+                    <select id="moedaLancamento">
+                        <option value="BRL">🇧🇷 Real (R$)</option>
+                        <option value="USD">🇺🇸 Dólar ($)</option>
+                        <option value="EUR">🇪🇺 Euro (€)</option>
+                        <option value="AUD">🇦🇺 Dólar Australiano (AU$)</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>Categoria</label>
                     <select id="categoriaLancamento">
                         <option value="">Selecione...</option>
@@ -1487,6 +1542,7 @@
                 <button class="btn btn-outline" id="btnLimparFiltros">🔄 Limpar filtros</button>
             </div>
 
+            <!-- Gerenciar Categorias -->
             <div class="categoria-form">
                 <span style="font-weight:600; color:var(--text-secondary);">🏷️ Categorias:</span>
                 <div class="form-group" style="flex:1; min-width:140px;">
@@ -1509,13 +1565,23 @@
                 <select id="filtroCategoria" style="padding:6px 12px; border-radius:8px; border:1px solid var(--border-input); background:var(--bg-input); color:var(--text-primary);">
                     <option value="todas">Todas categorias</option>
                 </select>
+                <select id="filtroMoeda" style="padding:6px 12px; border-radius:8px; border:1px solid var(--border-input); background:var(--bg-input); color:var(--text-primary);">
+                    <option value="todas">Todas moedas</option>
+                    <option value="BRL">🇧🇷 Real</option>
+                    <option value="USD">🇺🇸 Dólar</option>
+                    <option value="EUR">🇪🇺 Euro</option>
+                    <option value="AUD">🇦🇺 Dólar Australiano</option>
+                </select>
             </div>
 
+            <!-- Importação / Exportação -->
             <div class="import-export-area">
                 <span style="font-weight:600; color:var(--text-secondary); font-size:13px;">📂 Exportar:</span>
                 <button class="btn btn-success btn-sm" id="btnExportarCSV">📄 CSV</button>
                 <button class="btn btn-excel btn-sm" id="btnExportarExcel">📊 Excel</button>
+
                 <span class="divider">|</span>
+
                 <span style="font-weight:600; color:var(--text-secondary); font-size:13px;">📥 Importar:</span>
                 <div class="form-group" style="flex:0 0 auto;">
                     <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" />
@@ -1531,13 +1597,14 @@
                             <th>Descrição</th>
                             <th>Tipo</th>
                             <th>Categoria</th>
+                            <th>Moeda</th>
                             <th>Valor</th>
                             <th>Parcelas</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="tabelaLancamentos">
-                        <tr><td colspan="7" style="text-align:center; color:var(--text-light);">Nenhum lançamento ainda.</td></tr>
+                        <tr><td colspan="8" style="text-align:center; color:var(--text-light);">Nenhum lançamento ainda.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1558,6 +1625,15 @@
                     <input type="text" id="nomeReserva" placeholder="Ex: Emergência, Viagem..." />
                 </div>
                 <div class="form-group">
+                    <label>Moeda</label>
+                    <select id="moedaReserva">
+                        <option value="BRL">🇧🇷 Real (R$)</option>
+                        <option value="USD">🇺🇸 Dólar ($)</option>
+                        <option value="EUR">🇪🇺 Euro (€)</option>
+                        <option value="AUD">🇦🇺 Dólar Australiano (AU$)</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>Valor</label>
                     <input type="number" id="valorReserva" placeholder="0,00" step="0.01" />
                 </div>
@@ -1570,6 +1646,7 @@
                 </div>
             </div>
 
+            <!-- Gráfico de Pizza - Distribuição das Reservas -->
             <div class="reserva-chart-container">
                 <div class="chart-container">
                     <h4 style="text-align:center; color:var(--text-primary); margin-bottom:8px;">📊 Distribuição das Reservas</h4>
@@ -1613,6 +1690,7 @@
                         <canvas id="graficoReceitasDespesas"></canvas>
                     </div>
                 </div>
+
                 <div class="stats-card">
                     <h4>🏷️ Despesas por Categoria</h4>
                     <div class="chart-container">
@@ -1641,22 +1719,38 @@
         </div>
     </div>
 
-    <!-- MODAL DE EDIÇÃO DE RESERVA -->
+    <!-- ============================
+    MODAL DE EDIÇÃO DE RESERVA
+    ============================ -->
     <div class="modal-overlay" id="modalEditarReserva">
         <div class="modal">
             <h3>✏️ Editar Reserva</h3>
+            
             <div class="form-group">
                 <label>Nome da reserva</label>
                 <input type="text" id="editNomeReserva" />
             </div>
+            
+            <div class="form-group">
+                <label>Moeda</label>
+                <select id="editMoedaReserva">
+                    <option value="BRL">🇧🇷 Real (R$)</option>
+                    <option value="USD">🇺🇸 Dólar ($)</option>
+                    <option value="EUR">🇪🇺 Euro (€)</option>
+                    <option value="AUD">🇦🇺 Dólar Australiano (AU$)</option>
+                </select>
+            </div>
+            
             <div class="form-group">
                 <label>Valor atual</label>
                 <input type="number" id="editValorReserva" step="0.01" />
             </div>
+            
             <div class="form-group">
                 <label>Data</label>
                 <input type="date" id="editDataReserva" />
             </div>
+
             <div class="saque-area">
                 <label>💡 Ações rápidas:</label>
                 <div class="saque-buttons">
@@ -1667,6 +1761,7 @@
                     <input type="number" id="inputSaqueParcial" placeholder="Valor do saque..." step="0.01" />
                 </div>
             </div>
+
             <div class="modal-actions">
                 <button class="btn btn-outline" id="btnCancelarEdicao">Cancelar</button>
                 <button class="btn btn-primary" id="btnSalvarEdicao">💾 Salvar</button>
@@ -1677,7 +1772,6 @@
     <script>
         // ============================================================
         //  CONFIGURAÇÃO DO FIREBASE
-        //  🔴 SUBSTITUA PELAS SUAS CREDENCIAIS
         // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyB6eWS-N2hacE2Uyn5gCwf6m1P169T_y_4",
@@ -1694,7 +1788,7 @@
         const db = firebase.firestore();
 
         // ============================================================
-        //  SISTEMA DE AUTENTICAÇÃO COM FIREBASE
+        //  SISTEMA DE AUTENTICAÇÃO CORRIGIDO
         // ============================================================
 
         (function() {
@@ -1706,17 +1800,17 @@
             const loginForm = document.getElementById('loginForm');
             const registerForm = document.getElementById('registerForm');
             const authError = document.getElementById('authError');
+            const authSuccess = document.getElementById('authSuccess');
 
-            const loginEmail = document.getElementById('loginEmail');
+            const loginUsername = document.getElementById('loginUsername');
             const loginPassword = document.getElementById('loginPassword');
             const btnLogin = document.getElementById('btnLogin');
 
-            const registerEmail = document.getElementById('registerEmail');
+            const registerUsername = document.getElementById('registerUsername');
             const registerPassword = document.getElementById('registerPassword');
             const registerConfirmPassword = document.getElementById('registerConfirmPassword');
             const btnRegister = document.getElementById('btnRegister');
 
-            const btnGoogleLogin = document.getElementById('btnGoogleLogin');
             const showRegister = document.getElementById('showRegister');
             const showLogin = document.getElementById('showLogin');
 
@@ -1732,55 +1826,111 @@
             function showError(msg) {
                 authError.textContent = msg;
                 authError.classList.add('show');
-                setTimeout(() => authError.classList.remove('show'), 4000);
+                authSuccess.classList.remove('show');
+                setTimeout(() => authError.classList.remove('show'), 5000);
+            }
+
+            function showSuccess(msg) {
+                authSuccess.textContent = msg;
+                authSuccess.classList.add('show');
+                authError.classList.remove('show');
+                setTimeout(() => authSuccess.classList.remove('show'), 3000);
             }
 
             function setLoading(loading) {
                 loadingAuth.style.display = loading ? 'block' : 'none';
+                btnLogin.disabled = loading;
+                btnRegister.disabled = loading;
             }
 
-            // ---------- LOGIN COM EMAIL ----------
-            function doLogin() {
-                const email = loginEmail.value.trim();
+            // ---------- FUNÇÃO PARA CRIAR USUÁRIO DEMO ----------
+            async function criarUsuarioDemo() {
+                const email = 'demo@imperio.finance';
+                const password = 'demo123';
+                const username = 'demo';
+
+                try {
+                    // Verificar se o usuário já existe
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    // Criar perfil no Firestore
+                    await db.collection('users').doc(userCredential.user.uid).set({
+                        username: username,
+                        displayName: 'demo',
+                        email: email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lancamentos: [],
+                        reservas: [],
+                        categorias: ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'],
+                        limiteCredito: 0
+                    });
+                    console.log('✅ Usuário demo criado com sucesso!');
+                } catch (error) {
+                    if (error.code === 'auth/email-already-in-use') {
+                        console.log('ℹ️ Usuário demo já existe.');
+                    } else {
+                        console.error('❌ Erro ao criar usuário demo:', error);
+                    }
+                }
+            }
+
+            // ---------- LOGIN ----------
+            async function doLogin() {
+                const username = loginUsername.value.trim();
                 const password = loginPassword.value.trim();
 
-                if (!email || !password) {
-                    showError('Preencha e-mail e senha.');
+                if (!username || !password) {
+                    showError('Preencha usuário e senha.');
                     return;
                 }
 
                 setLoading(true);
 
-                auth.signInWithEmailAndPassword(email, password)
-                    .then((userCredential) => {
-                        setLoading(false);
-                        entrarNoSistema(userCredential.user);
-                    })
-                    .catch((error) => {
-                        setLoading(false);
-                        let msg = 'Erro ao fazer login.';
-                        if (error.code === 'auth/user-not-found') msg = 'Usuário não encontrado.';
-                        else if (error.code === 'auth/wrong-password') msg = 'Senha incorreta.';
-                        else if (error.code === 'auth/invalid-email') msg = 'E-mail inválido.';
-                        else if (error.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Tente novamente mais tarde.';
-                        showError(msg);
-                        console.error(error);
-                    });
+                try {
+                    // Tentar login com o e-mail formatado
+                    const email = username.toLowerCase() + '@imperio.finance';
+                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    
+                    // Atualizar nome de usuário no Firestore
+                    await db.collection('users').doc(userCredential.user.uid).update({
+                        username: username,
+                        displayName: username
+                    }).catch(() => {});
+
+                    showSuccess('Login realizado com sucesso!');
+                    setTimeout(() => {
+                        entrarNoSistema(auth.currentUser);
+                    }, 500);
+
+                } catch (error) {
+                    setLoading(false);
+                    let msg = 'Erro ao fazer login.';
+                    if (error.code === 'auth/user-not-found') msg = 'Usuário não encontrado.';
+                    else if (error.code === 'auth/wrong-password') msg = 'Senha incorreta.';
+                    else if (error.code === 'auth/invalid-email') msg = 'Usuário inválido.';
+                    else if (error.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Tente novamente mais tarde.';
+                    showError(msg);
+                    console.error(error);
+                }
             }
 
             // ---------- REGISTRO ----------
-            function doRegister() {
-                const email = registerEmail.value.trim();
+            async function doRegister() {
+                const username = registerUsername.value.trim();
                 const password = registerPassword.value.trim();
                 const confirm = registerConfirmPassword.value.trim();
 
-                if (!email || !password || !confirm) {
+                if (!username || !password || !confirm) {
                     showError('Preencha todos os campos.');
                     return;
                 }
 
-                if (password.length < 6) {
-                    showError('Senha deve ter pelo menos 6 caracteres.');
+                if (username.length < 3) {
+                    showError('Usuário deve ter pelo menos 3 caracteres.');
+                    return;
+                }
+
+                if (password.length < 4) {
+                    showError('Senha deve ter pelo menos 4 caracteres.');
                     return;
                 }
 
@@ -1791,73 +1941,45 @@
 
                 setLoading(true);
 
-                auth.createUserWithEmailAndPassword(email, password)
-                    .then((userCredential) => {
-                        setLoading(false);
-                        // Criar perfil do usuário no Firestore
-                        return db.collection('users').doc(userCredential.user.uid).set({
-                            email: email,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            lancamentos: [],
-                            reservas: [],
-                            categorias: ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde',
-                                'Educação'
-                            ],
-                            limiteCredito: 0
-                        });
-                    })
-                    .then(() => {
-                        alert('✅ Conta criada com sucesso!');
+                try {
+                    const email = username.toLowerCase() + '@imperio.finance';
+                    
+                    // Criar usuário no Firebase Auth
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    
+                    // Criar perfil no Firestore
+                    await db.collection('users').doc(userCredential.user.uid).set({
+                        username: username,
+                        displayName: username,
+                        email: email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lancamentos: [],
+                        reservas: [],
+                        categorias: ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'],
+                        limiteCredito: 0
+                    });
+
+                    setLoading(false);
+                    showSuccess('✅ Conta criada com sucesso! Faça login.');
+                    
+                    // Fazer logout para o usuário fazer login manualmente
+                    await auth.signOut();
+                    
+                    setTimeout(() => {
                         toggleForms('login');
-                        loginEmail.value = email;
+                        loginUsername.value = username;
                         loginPassword.value = '';
-                    })
-                    .catch((error) => {
-                        setLoading(false);
-                        let msg = 'Erro ao criar conta.';
-                        if (error.code === 'auth/email-already-in-use') msg = 'E-mail já cadastrado.';
-                        else if (error.code === 'auth/invalid-email') msg = 'E-mail inválido.';
-                        else if (error.code === 'auth/weak-password') msg = 'Senha muito fraca. Use pelo menos 6 caracteres.';
-                        showError(msg);
-                        console.error(error);
-                    });
-            }
+                    }, 500);
 
-            // ---------- LOGIN COM GOOGLE ----------
-            function doGoogleLogin() {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                setLoading(true);
-
-                auth.signInWithPopup(provider)
-                    .then((result) => {
-                        setLoading(false);
-                        // Verificar se é o primeiro login
-                        const user = result.user;
-                        db.collection('users').doc(user.uid).get().then((doc) => {
-                            if (!doc.exists) {
-                                return db.collection('users').doc(user.uid).set({
-                                    email: user.email,
-                                    displayName: user.displayName,
-                                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                                    lancamentos: [],
-                                    reservas: [],
-                                    categorias: ['Salário', 'Aluguel', 'Alimentação', 'Transporte',
-                                        'Lazer', 'Saúde', 'Educação'
-                                    ],
-                                    limiteCredito: 0
-                                });
-                            }
-                        }).then(() => {
-                            entrarNoSistema(user);
-                        });
-                    })
-                    .catch((error) => {
-                        setLoading(false);
-                        let msg = 'Erro ao fazer login com Google.';
-                        if (error.code === 'auth/popup-closed-by-user') msg = 'Popup fechado. Tente novamente.';
-                        showError(msg);
-                        console.error(error);
-                    });
+                } catch (error) {
+                    setLoading(false);
+                    let msg = 'Erro ao criar conta.';
+                    if (error.code === 'auth/email-already-in-use') msg = 'Usuário já cadastrado.';
+                    else if (error.code === 'auth/invalid-email') msg = 'Usuário inválido.';
+                    else if (error.code === 'auth/weak-password') msg = 'Senha muito fraca. Use pelo menos 4 caracteres.';
+                    showError(msg);
+                    console.error(error);
+                }
             }
 
             // ---------- ENTRAR/SAIR DO SISTEMA ----------
@@ -1865,17 +1987,25 @@
                 authContainer.style.display = 'none';
                 appContainer.classList.add('active');
 
-                // Atualizar informações do usuário
-                const name = user.displayName || user.email || 'Usuário';
-                const initial = name.charAt(0).toUpperCase();
-                userAvatar.textContent = initial;
-                userNameDisplay.textContent = name;
+                // Buscar nome de usuário do Firestore
+                db.collection('users').doc(user.uid).get().then((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        const name = data.displayName || data.username || user.email || 'Usuário';
+                        const initial = name.charAt(0).toUpperCase();
+                        userAvatar.textContent = initial;
+                        userNameDisplay.textContent = name;
+                    } else {
+                        const name = user.email || 'Usuário';
+                        const initial = name.charAt(0).toUpperCase();
+                        userAvatar.textContent = initial;
+                        userNameDisplay.textContent = name;
+                    }
+                });
 
-                // Atualizar status de sincronização
                 syncDot.className = 'dot online';
                 syncText.textContent = 'Sincronizado';
 
-                // Inicializar o sistema
                 if (typeof inicializarSistema === 'function') {
                     inicializarSistema(user);
                 }
@@ -1886,10 +2016,13 @@
                     authContainer.style.display = 'block';
                     appContainer.classList.remove('active');
                     loginPassword.value = '';
-                    registerEmail.value = '';
+                    registerUsername.value = '';
                     registerPassword.value = '';
                     registerConfirmPassword.value = '';
                     authError.classList.remove('show');
+                    authSuccess.classList.remove('show');
+                    syncDot.className = 'dot offline';
+                    syncText.textContent = 'Offline';
                 });
             }
 
@@ -1899,10 +2032,12 @@
                     loginForm.style.display = 'block';
                     registerForm.style.display = 'none';
                     authError.classList.remove('show');
+                    authSuccess.classList.remove('show');
                 } else {
                     loginForm.style.display = 'none';
                     registerForm.style.display = 'block';
                     authError.classList.remove('show');
+                    authSuccess.classList.remove('show');
                 }
             }
 
@@ -1911,13 +2046,14 @@
             loginPassword.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') doLogin();
             });
+            loginUsername.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') loginPassword.focus();
+            });
 
             btnRegister.addEventListener('click', doRegister);
             registerConfirmPassword.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') doRegister();
             });
-
-            btnGoogleLogin.addEventListener('click', doGoogleLogin);
 
             showRegister.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -1935,7 +2071,11 @@
                 }
             });
 
-            // ---------- VERIFICAR SESSÃO ----------
+            // ---------- INICIALIZAÇÃO ----------
+            // Criar usuário demo automaticamente
+            setTimeout(criarUsuarioDemo, 1000);
+
+            // Verificar sessão ao carregar
             auth.onAuthStateChanged(function(user) {
                 if (user) {
                     entrarNoSistema(user);
@@ -1965,7 +2105,9 @@
             const tabelaBody = document.getElementById('tabelaLancamentos');
             const reservasGrid = document.getElementById('reservasGrid');
 
+            // Formulário lançamentos
             const tipoLanc = document.getElementById('tipoLancamento');
+            const moedaLanc = document.getElementById('moedaLancamento');
             const categoriaLanc = document.getElementById('categoriaLancamento');
             const descLanc = document.getElementById('descLancamento');
             const valorLanc = document.getElementById('valorLancamento');
@@ -1973,24 +2115,31 @@
             const parcelasLanc = document.getElementById('parcelasLancamento');
             const btnAdd = document.getElementById('btnAddLancamento');
 
+            // Filtros
             const filtroTipo = document.getElementById('filtroTipo');
             const filtroMes = document.getElementById('filtroMes');
             const filtroCategoria = document.getElementById('filtroCategoria');
+            const filtroMoeda = document.getElementById('filtroMoeda');
 
+            // Categorias
             const novaCategoriaInput = document.getElementById('novaCategoria');
             const btnAddCategoria = document.getElementById('btnAddCategoria');
             const categoriaTags = document.getElementById('categoriaTags');
 
+            // Reservas
             const nomeReserva = document.getElementById('nomeReserva');
+            const moedaReserva = document.getElementById('moedaReserva');
             const valorReserva = document.getElementById('valorReserva');
             const dataReserva = document.getElementById('dataReserva');
             const btnAddReserva = document.getElementById('btnAddReserva');
 
+            // Import/Export
             const btnExportarCSV = document.getElementById('btnExportarCSV');
             const btnExportarExcel = document.getElementById('btnExportarExcel');
             const fileInput = document.getElementById('fileInput');
             const btnImportarArquivo = document.getElementById('btnImportarArquivo');
 
+            // Gráficos
             const canvasDistribuicao = document.getElementById('graficoDistribuicaoReservas');
             let ctxDistribuicao = canvasDistribuicao.getContext('2d');
             let chartDistribuicao = null;
@@ -2003,11 +2152,14 @@
             let ctxDespesasCategorias = canvasDespesasCategorias.getContext('2d');
             let chartDespesasCategorias = null;
 
+            // Dark Mode / Zerar
             const btnDarkMode = document.getElementById('btnDarkMode');
-            const currencySelector = document.getElementById('currencySelector');
+            const btnZerarDados = document.getElementById('btnZerarDados');
 
+            // Modal
             const modalOverlay = document.getElementById('modalEditarReserva');
             const editNomeReserva = document.getElementById('editNomeReserva');
+            const editMoedaReserva = document.getElementById('editMoedaReserva');
             const editValorReserva = document.getElementById('editValorReserva');
             const editDataReserva = document.getElementById('editDataReserva');
             const btnSalvarEdicao = document.getElementById('btnSalvarEdicao');
@@ -2022,16 +2174,17 @@
             let categorias = [];
             let limiteCredito = 0;
             let reservaEditando = null;
-            let moedaAtual = 'BRL';
             let currentUser = null;
-            let isSyncing = false;
 
             // ---------- CONFIGURAÇÃO DE MOEDAS ----------
             const MOEDAS = {
                 BRL: { simbolo: 'R$', nome: 'Real', taxa: 1 },
                 USD: { simbolo: '$', nome: 'Dólar', taxa: 5.7 },
+                EUR: { simbolo: '€', nome: 'Euro', taxa: 6.2 },
                 AUD: { simbolo: 'AU$', nome: 'Dólar Australiano', taxa: 3.75 }
             };
+
+            const MOEDA_PADRAO = 'BRL';
 
             // ---------- FUNÇÕES DE CARGA/SALVO FIREBASE ----------
             async function carregarDadosFirebase(user) {
@@ -2048,11 +2201,24 @@
                             'Saúde', 'Educação'
                         ];
                         limiteCredito = data.limiteCredito || 0;
+
+                        // Garantir que lançamentos antigos tenham moeda
+                        lancamentos = lancamentos.map(l => {
+                            if (!l.moeda) l.moeda = MOEDA_PADRAO;
+                            return l;
+                        });
+
+                        // Garantir que reservas antigas tenham moeda
+                        reservas = reservas.map(r => {
+                            if (!r.moeda) r.moeda = MOEDA_PADRAO;
+                            return r;
+                        });
                     } else {
                         // Criar perfil se não existir
                         await db.collection('users').doc(user.uid).set({
+                            username: user.displayName || user.email || 'Usuário',
+                            displayName: user.displayName || user.email || 'Usuário',
                             email: user.email,
-                            displayName: user.displayName || user.email,
                             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                             lancamentos: [],
                             reservas: [],
@@ -2068,14 +2234,6 @@
                     }
 
                     // Carregar preferências
-                    try {
-                        const rawCurr = localStorage.getItem('imperio_currency');
-                        if (rawCurr && MOEDAS[rawCurr]) {
-                            moedaAtual = rawCurr;
-                            currencySelector.value = rawCurr;
-                        }
-                    } catch (e) {}
-
                     try {
                         const dark = localStorage.getItem('imperio_darkmode');
                         if (dark === 'true') {
@@ -2097,7 +2255,6 @@
                 if (!currentUser) return;
 
                 try {
-                    isSyncing = true;
                     atualizarStatusSync('syncing');
 
                     await db.collection('users').doc(currentUser.uid).update({
@@ -2112,8 +2269,6 @@
                 } catch (error) {
                     console.error('Erro ao salvar dados no Firebase:', error);
                     atualizarStatusSync(false);
-                } finally {
-                    isSyncing = false;
                 }
             }
 
@@ -2144,19 +2299,14 @@
                 return dt.toLocaleDateString('pt-BR');
             }
 
-            function getSimboloMoeda() {
-                return MOEDAS[moedaAtual]?.simbolo || 'R$';
+            function getSimboloMoeda(moeda) {
+                return MOEDAS[moeda]?.simbolo || MOEDAS[MOEDA_PADRAO].simbolo;
             }
 
-            function getTaxaMoeda() {
-                return MOEDAS[moedaAtual]?.taxa || 1;
-            }
-
-            function formatarMoeda(v) {
-                const simbolo = getSimboloMoeda();
-                const taxa = getTaxaMoeda();
-                const valorConvertido = v / taxa;
-                return simbolo + ' ' + valorConvertido.toFixed(2).replace('.', ',');
+            function formatarMoeda(v, moeda) {
+                const m = moeda || MOEDA_PADRAO;
+                const simbolo = getSimboloMoeda(m);
+                return simbolo + ' ' + v.toFixed(2).replace('.', ',');
             }
 
             function calcularParcelasFaturas() {
@@ -2178,7 +2328,7 @@
                     .reduce((s, l) => s + l.valor, 0);
             }
 
-            // ---------- GRÁFICOS ----------
+            // ---------- GRÁFICO DE PIZZA - DISTRIBUIÇÃO DAS RESERVAS ----------
             function desenharGraficoDistribuicaoReservas() {
                 if (chartDistribuicao) {
                     chartDistribuicao.destroy();
@@ -2187,7 +2337,7 @@
 
                 if (reservas.length === 0) return;
 
-                const labels = reservas.map(r => r.nome);
+                const labels = reservas.map(r => r.nome + ' (' + getSimboloMoeda(r.moeda || MOEDA_PADRAO) + ')');
                 const valores = reservas.map(r => r.valor);
                 const total = valores.reduce((a, b) => a + b, 0);
 
@@ -2226,9 +2376,10 @@
                                 callbacks: {
                                     label: function(context) {
                                         const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                        const valorFormatado = formatarMoeda(context.parsed);
-                                        return context.label + ': ' + valorFormatado + ' (' + percentage +
-                                        '%)';
+                                        const idx = context.dataIndex;
+                                        const moeda = reservas[idx]?.moeda || MOEDA_PADRAO;
+                                        const valorFormatado = formatarMoeda(context.parsed, moeda);
+                                        return context.label + ': ' + valorFormatado + ' (' + percentage + '%)';
                                     }
                                 }
                             }
@@ -2237,6 +2388,7 @@
                 });
             }
 
+            // ---------- GRÁFICO DE PIZZA - RECEITAS VS DESPESAS ----------
             function desenharGraficoReceitasDespesas() {
                 if (chartReceitasDespesas) {
                     chartReceitasDespesas.destroy();
@@ -2283,9 +2435,8 @@
                                     label: function(context) {
                                         const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                         const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                        const valorFormatado = formatarMoeda(context.parsed);
-                                        return context.label + ': ' + valorFormatado + ' (' + percentage +
-                                        '%)';
+                                        return context.label + ': ' + formatarMoeda(context.parsed) + ' (' +
+                                            percentage + '%)';
                                     }
                                 }
                             }
@@ -2294,6 +2445,7 @@
                 });
             }
 
+            // ---------- GRÁFICO DE PIZZA - DESPESAS POR CATEGORIA ----------
             function desenharGraficoDespesasCategorias() {
                 if (chartDespesasCategorias) {
                     chartDespesasCategorias.destroy();
@@ -2349,9 +2501,8 @@
                                     label: function(context) {
                                         const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                         const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                        const valorFormatado = formatarMoeda(context.parsed);
-                                        return context.label + ': ' + valorFormatado + ' (' + percentage +
-                                        '%)';
+                                        return context.label + ': ' + formatarMoeda(context.parsed) + ' (' +
+                                            percentage + '%)';
                                     }
                                 }
                             }
@@ -2360,230 +2511,7 @@
                 });
             }
 
-            // ---------- RENDERIZAÇÃO ----------
-            function renderCategorias() {
-                categoriaTags.innerHTML = '';
-                categorias.forEach((cat, idx) => {
-                    const tag = document.createElement('span');
-                    tag.className = 'categoria-tag';
-                    tag.innerHTML = `${cat} <span class="remove-cat" data-idx="${idx}">×</span>`;
-                    categoriaTags.appendChild(tag);
-                });
-
-                const selects = [categoriaLanc, filtroCategoria];
-                selects.forEach(sel => {
-                    const currentVal = sel.value;
-                    sel.innerHTML = '<option value="">Selecione...</option>';
-                    categorias.forEach(cat => {
-                        const opt = document.createElement('option');
-                        opt.value = cat;
-                        opt.textContent = cat;
-                        sel.appendChild(opt);
-                    });
-                    if (currentVal && categorias.includes(currentVal)) {
-                        sel.value = currentVal;
-                    }
-                    if (sel === filtroCategoria) {
-                        const optAll = document.createElement('option');
-                        optAll.value = 'todas';
-                        optAll.textContent = 'Todas categorias';
-                        sel.prepend(optAll);
-                        sel.value = 'todas';
-                    }
-                });
-
-                document.querySelectorAll('.remove-cat').forEach(el => {
-                    el.addEventListener('click', function() {
-                        const idx = parseInt(this.dataset.idx);
-                        if (!isNaN(idx) && idx >= 0 && idx < categorias.length) {
-                            const emUso = lancamentos.some(l => l.categoria === categorias[idx]);
-                            if (emUso) {
-                                alert('Esta categoria está em uso em lançamentos. Remova os lançamentos primeiro ou edite-os.');
-                                return;
-                            }
-                            categorias.splice(idx, 1);
-                            salvarDadosFirebase();
-                            renderCategorias();
-                        }
-                    });
-                });
-            }
-
-            function renderInicio() {
-                const totalReceitas = lancamentos
-                    .filter(l => l.tipo === 'receita')
-                    .reduce((s, l) => s + l.valor, 0);
-
-                const totalDespesas = lancamentos
-                    .filter(l => l.tipo === 'despesa')
-                    .reduce((s, l) => s + l.valor, 0);
-
-                const totalParcelasFaturas = calcularParcelasFaturas();
-
-                const saldo = totalReceitas - totalDespesas - totalParcelasFaturas;
-                saldoEl.textContent = formatarMoeda(saldo);
-                saldoEl.className = 'card-value ' + (saldo >= 0 ? 'positive' : 'negative');
-
-                const totalFaturas = calcularTotalFaturas();
-                const credito = Math.max(0, limiteCredito - totalFaturas);
-                creditoEl.textContent = formatarMoeda(credito);
-                creditoEl.className = 'card-value ' + (credito > 0 ? 'positive' : credito === 0 ? 'neutral' : 'negative');
-
-                const totalRes = reservas.reduce((s, r) => s + r.valor, 0);
-                totalReservasEl.textContent = formatarMoeda(totalRes);
-
-                const hojeStr = hoje();
-                const limiteVenc = new Date();
-                limiteVenc.setDate(limiteVenc.getDate() + 7);
-                const limiteStr = limiteVenc.toISOString().slice(0, 10);
-
-                const proximas = lancamentos
-                    .filter(l => l.tipo === 'despesa' && l.parcelas && l.parcelas.length > 0)
-                    .flatMap(l => l.parcelas.map((p, idx) => ({
-                        desc: l.descricao + (l.parcelas.length > 1 ? ` (${idx+1}/${l.parcelas.length})` : ''),
-                        data: p,
-                        valor: l.valor / l.parcelas.length
-                    })))
-                    .filter(item => item.data >= hojeStr && item.data <= limiteStr)
-                    .sort((a, b) => a.data.localeCompare(b.data));
-
-                vencerList.innerHTML = '';
-                if (proximas.length === 0) {
-                    vencerList.innerHTML = '<div class="empty-message">Nenhuma conta próxima do vencimento.</div>';
-                } else {
-                    proximas.forEach(item => {
-                        const div = document.createElement('div');
-                        div.className = 'vencer-item';
-                        div.innerHTML = `
-                                <span class="desc">${item.desc}</span>
-                                <span class="date">📅 ${dataParaStr(item.data)}</span>
-                                <span class="value">${formatarMoeda(item.valor)}</span>
-                            `;
-                        vencerList.appendChild(div);
-                    });
-                }
-            }
-
-            function renderTabela() {
-                const tipoFiltro = filtroTipo.value;
-                const mesFiltro = filtroMes.value;
-                const catFiltro = filtroCategoria.value;
-
-                let filtrados = [...lancamentos];
-
-                if (tipoFiltro !== 'todos') {
-                    filtrados = filtrados.filter(l => l.tipo === tipoFiltro);
-                }
-
-                if (catFiltro !== 'todas' && catFiltro) {
-                    filtrados = filtrados.filter(l => l.categoria === catFiltro);
-                }
-
-                if (mesFiltro) {
-                    const [ano, mes] = mesFiltro.split('-').map(Number);
-                    filtrados = filtrados.filter(l => {
-                        const d = new Date(l.data + 'T00:00:00');
-                        return d.getFullYear() === ano && (d.getMonth() + 1) === mes;
-                    });
-                }
-
-                filtrados.sort((a, b) => b.data.localeCompare(a.data));
-
-                tabelaBody.innerHTML = '';
-                if (filtrados.length === 0) {
-                    tabelaBody.innerHTML =
-                        '<tr><td colspan="7" style="text-align:center; color:var(--text-light);">Nenhum lançamento encontrado.</td></tr>';
-                    return;
-                }
-
-                filtrados.forEach((l, idx) => {
-                    const tr = document.createElement('tr');
-                    const totalParcelas = l.parcelas ? l.parcelas.length : 1;
-                    const valorParcela = l.valor / totalParcelas;
-
-                    const tipos = {
-                        'receita': { label: 'Receita', badge: 'badge-receita', class: 'text-success' },
-                        'despesa': { label: 'Despesa', badge: 'badge-despesa', class: 'text-danger' },
-                        'aumento_limite': { label: '📈 Aumento de Limite', badge: 'badge-aumento',
-                            class: 'text-info' },
-                        'fatura': { label: '💳 Fatura', badge: 'badge-fatura', class: 'text-warning' }
-                    };
-
-                    const info = tipos[l.tipo] || tipos['despesa'];
-
-                    tr.innerHTML = `
-                            <td>${dataParaStr(l.data)}</td>
-                            <td>${l.descricao}</td>
-                            <td><span class="badge ${info.badge}">${info.label}</span></td>
-                            <td>${l.categoria || '-'}</td>
-                            <td class="${info.class} fw-bold">${formatarMoeda(l.valor)}</td>
-                            <td>${totalParcelas}x ${formatarMoeda(valorParcela)}</td>
-                            <td><button class="btn btn-danger btn-sm" data-idx="${idx}">🗑️</button></td>
-                        `;
-                    tabelaBody.appendChild(tr);
-
-                    tr.querySelector('button').addEventListener('click', function() {
-                        const realIdx = lancamentos.indexOf(l);
-                        if (realIdx !== -1) {
-                            lancamentos.splice(realIdx, 1);
-                            salvarDadosFirebase();
-                            renderTabela();
-                            renderInicio();
-                            atualizarEstatisticas();
-                        }
-                    });
-                });
-            }
-
-            function renderReservas() {
-                reservasGrid.innerHTML = '';
-                if (reservas.length === 0) {
-                    reservasGrid.innerHTML =
-                        '<div class="empty-message" style="grid-column:1/-1;">Nenhuma reserva cadastrada.</div>';
-                    return;
-                }
-
-                const sorted = [...reservas].sort((a, b) => b.data.localeCompare(a.data));
-
-                sorted.forEach((r, idx) => {
-                    const div = document.createElement('div');
-                    div.className = 'reserva-card';
-                    div.innerHTML = `
-                            <div class="name">${r.nome}</div>
-                            <div class="value">${formatarMoeda(r.valor)}</div>
-                            <div class="date">📅 ${dataParaStr(r.data)}</div>
-                            <div class="card-actions">
-                                <button class="btn btn-edit btn-sm btn-editar-reserva" data-idx="${idx}">✏️ Editar</button>
-                                <button class="btn btn-danger btn-sm btn-excluir-reserva" data-idx="${idx}">🗑️</button>
-                            </div>
-                        `;
-                    reservasGrid.appendChild(div);
-                });
-
-                document.querySelectorAll('.btn-editar-reserva').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const idx = parseInt(this.dataset.idx);
-                        abrirModalEdicao(idx);
-                    });
-                });
-
-                document.querySelectorAll('.btn-excluir-reserva').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const idx = parseInt(this.dataset.idx);
-                        if (confirm(`Deseja realmente excluir a reserva "${reservas[idx].nome}"?`)) {
-                            reservas.splice(idx, 1);
-                            salvarDadosFirebase();
-                            renderReservas();
-                            renderInicio();
-                        }
-                    });
-                });
-
-                setTimeout(() => {
-                    desenharGraficoDistribuicaoReservas();
-                }, 100);
-            }
-
+            // ---------- ATUALIZAR ESTATÍSTICAS ----------
             function atualizarEstatisticas() {
                 const totalReceitas = lancamentos
                     .filter(l => l.tipo === 'receita')
@@ -2636,24 +2564,253 @@
                 desenharGraficoDespesasCategorias();
             }
 
-            function renderTudo() {
-                renderCategorias();
-                renderInicio();
-                renderTabela();
-                renderReservas();
-                atualizarEstatisticas();
-                setTimeout(() => {
-                    desenharGraficoDistribuicaoReservas();
-                }, 200);
+            // ---------- RENDER: CATEGORIAS ----------
+            function renderCategorias() {
+                categoriaTags.innerHTML = '';
+                categorias.forEach((cat, idx) => {
+                    const tag = document.createElement('span');
+                    tag.className = 'categoria-tag';
+                    tag.innerHTML = `${cat} <span class="remove-cat" data-idx="${idx}">×</span>`;
+                    categoriaTags.appendChild(tag);
+                });
+
+                const selects = [categoriaLanc, filtroCategoria];
+                selects.forEach(sel => {
+                    const currentVal = sel.value;
+                    sel.innerHTML = '<option value="">Selecione...</option>';
+                    categorias.forEach(cat => {
+                        const opt = document.createElement('option');
+                        opt.value = cat;
+                        opt.textContent = cat;
+                        sel.appendChild(opt);
+                    });
+                    if (currentVal && categorias.includes(currentVal)) {
+                        sel.value = currentVal;
+                    }
+                    if (sel === filtroCategoria) {
+                        const optAll = document.createElement('option');
+                        optAll.value = 'todas';
+                        optAll.textContent = 'Todas categorias';
+                        sel.prepend(optAll);
+                        sel.value = 'todas';
+                    }
+                });
+
+                document.querySelectorAll('.remove-cat').forEach(el => {
+                    el.addEventListener('click', function() {
+                        const idx = parseInt(this.dataset.idx);
+                        if (!isNaN(idx) && idx >= 0 && idx < categorias.length) {
+                            const emUso = lancamentos.some(l => l.categoria === categorias[idx]);
+                            if (emUso) {
+                                alert('Esta categoria está em uso em lançamentos. Remova os lançamentos primeiro ou edite-os.');
+                                return;
+                            }
+                            categorias.splice(idx, 1);
+                            salvarDadosFirebase();
+                            renderCategorias();
+                        }
+                    });
+                });
             }
 
-            // ---------- MODAL ----------
+            // ---------- RENDER: INÍCIO ----------
+            function renderInicio() {
+                const totalReceitas = lancamentos
+                    .filter(l => l.tipo === 'receita')
+                    .reduce((s, l) => s + l.valor, 0);
+
+                const totalDespesas = lancamentos
+                    .filter(l => l.tipo === 'despesa')
+                    .reduce((s, l) => s + l.valor, 0);
+
+                const totalParcelasFaturas = calcularParcelasFaturas();
+
+                const saldo = totalReceitas - totalDespesas - totalParcelasFaturas;
+                saldoEl.textContent = formatarMoeda(saldo);
+                saldoEl.className = 'card-value ' + (saldo >= 0 ? 'positive' : 'negative');
+
+                const totalFaturas = calcularTotalFaturas();
+                const credito = Math.max(0, limiteCredito - totalFaturas);
+                creditoEl.textContent = formatarMoeda(credito);
+                creditoEl.className = 'card-value ' + (credito > 0 ? 'positive' : credito === 0 ? 'neutral' : 'negative');
+
+                const totalRes = reservas.reduce((s, r) => s + r.valor, 0);
+                totalReservasEl.textContent = formatarMoeda(totalRes);
+
+                const hojeStr = hoje();
+                const limiteVenc = new Date();
+                limiteVenc.setDate(limiteVenc.getDate() + 7);
+                const limiteStr = limiteVenc.toISOString().slice(0, 10);
+
+                const proximas = lancamentos
+                    .filter(l => l.tipo === 'despesa' && l.parcelas && l.parcelas.length > 0)
+                    .flatMap(l => l.parcelas.map((p, idx) => ({
+                        desc: l.descricao + (l.parcelas.length > 1 ? ` (${idx+1}/${l.parcelas.length})` : ''),
+                        data: p,
+                        valor: l.valor / l.parcelas.length,
+                        moeda: l.moeda || MOEDA_PADRAO
+                    })))
+                    .filter(item => item.data >= hojeStr && item.data <= limiteStr)
+                    .sort((a, b) => a.data.localeCompare(b.data));
+
+                vencerList.innerHTML = '';
+                if (proximas.length === 0) {
+                    vencerList.innerHTML = '<div class="empty-message">Nenhuma conta próxima do vencimento.</div>';
+                } else {
+                    proximas.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'vencer-item';
+                        div.innerHTML = `
+                                <span class="desc">${item.desc}</span>
+                                <span class="date">📅 ${dataParaStr(item.data)}</span>
+                                <span class="value">${formatarMoeda(item.valor, item.moeda)}</span>
+                            `;
+                        vencerList.appendChild(div);
+                    });
+                }
+            }
+
+            // ---------- RENDER: TABELA LANÇAMENTOS ----------
+            function renderTabela() {
+                const tipoFiltro = filtroTipo.value;
+                const mesFiltro = filtroMes.value;
+                const catFiltro = filtroCategoria.value;
+                const moedaFiltro = filtroMoeda.value;
+
+                let filtrados = [...lancamentos];
+
+                if (tipoFiltro !== 'todos') {
+                    filtrados = filtrados.filter(l => l.tipo === tipoFiltro);
+                }
+
+                if (catFiltro !== 'todas' && catFiltro) {
+                    filtrados = filtrados.filter(l => l.categoria === catFiltro);
+                }
+
+                if (moedaFiltro !== 'todas' && moedaFiltro) {
+                    filtrados = filtrados.filter(l => (l.moeda || MOEDA_PADRAO) === moedaFiltro);
+                }
+
+                if (mesFiltro) {
+                    const [ano, mes] = mesFiltro.split('-').map(Number);
+                    filtrados = filtrados.filter(l => {
+                        const d = new Date(l.data + 'T00:00:00');
+                        return d.getFullYear() === ano && (d.getMonth() + 1) === mes;
+                    });
+                }
+
+                filtrados.sort((a, b) => b.data.localeCompare(a.data));
+
+                tabelaBody.innerHTML = '';
+                if (filtrados.length === 0) {
+                    tabelaBody.innerHTML =
+                        '<tr><td colspan="8" style="text-align:center; color:var(--text-light);">Nenhum lançamento encontrado.</td></tr>';
+                    return;
+                }
+
+                filtrados.forEach((l, idx) => {
+                    const tr = document.createElement('tr');
+                    const totalParcelas = l.parcelas ? l.parcelas.length : 1;
+                    const valorParcela = l.valor / totalParcelas;
+                    const moeda = l.moeda || MOEDA_PADRAO;
+
+                    const tipos = {
+                        'receita': { label: 'Receita', badge: 'badge-receita', class: 'text-success' },
+                        'despesa': { label: 'Despesa', badge: 'badge-despesa', class: 'text-danger' },
+                        'aumento_limite': { label: '📈 Aumento de Limite', badge: 'badge-aumento',
+                            class: 'text-info' },
+                        'fatura': { label: '💳 Fatura', badge: 'badge-fatura', class: 'text-warning' }
+                    };
+
+                    const info = tipos[l.tipo] || tipos['despesa'];
+                    const simbolo = getSimboloMoeda(moeda);
+
+                    tr.innerHTML = `
+                            <td>${dataParaStr(l.data)}</td>
+                            <td>${l.descricao}</td>
+                            <td><span class="badge ${info.badge}">${info.label}</span></td>
+                            <td>${l.categoria || '-'}</td>
+                            <td><span class="currency-badge">${simbolo} ${moeda}</span></td>
+                            <td class="${info.class} fw-bold">${formatarMoeda(l.valor, moeda)}</td>
+                            <td>${totalParcelas}x ${formatarMoeda(valorParcela, moeda)}</td>
+                            <td><button class="btn btn-danger btn-sm" data-idx="${idx}">🗑️</button></td>
+                        `;
+                    tabelaBody.appendChild(tr);
+
+                    tr.querySelector('button').addEventListener('click', function() {
+                        const realIdx = lancamentos.indexOf(l);
+                        if (realIdx !== -1) {
+                            lancamentos.splice(realIdx, 1);
+                            salvarDadosFirebase();
+                            renderTabela();
+                            renderInicio();
+                            atualizarEstatisticas();
+                        }
+                    });
+                });
+            }
+
+            // ---------- RENDER: RESERVAS ----------
+            function renderReservas() {
+                reservasGrid.innerHTML = '';
+                if (reservas.length === 0) {
+                    reservasGrid.innerHTML =
+                        '<div class="empty-message" style="grid-column:1/-1;">Nenhuma reserva cadastrada.</div>';
+                    return;
+                }
+
+                const sorted = [...reservas].sort((a, b) => b.data.localeCompare(a.data));
+
+                sorted.forEach((r, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'reserva-card';
+                    const moeda = r.moeda || MOEDA_PADRAO;
+                    const simbolo = getSimboloMoeda(moeda);
+                    div.innerHTML = `
+                            <div class="name">${r.nome}</div>
+                            <div class="value">${formatarMoeda(r.valor, moeda)}</div>
+                            <div class="currency">${simbolo} ${moeda}</div>
+                            <div class="date">📅 ${dataParaStr(r.data)}</div>
+                            <div class="card-actions">
+                                <button class="btn btn-edit btn-sm btn-editar-reserva" data-idx="${idx}">✏️ Editar</button>
+                                <button class="btn btn-danger btn-sm btn-excluir-reserva" data-idx="${idx}">🗑️</button>
+                            </div>
+                        `;
+                    reservasGrid.appendChild(div);
+                });
+
+                document.querySelectorAll('.btn-editar-reserva').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const idx = parseInt(this.dataset.idx);
+                        abrirModalEdicao(idx);
+                    });
+                });
+
+                document.querySelectorAll('.btn-excluir-reserva').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const idx = parseInt(this.dataset.idx);
+                        if (confirm(`Deseja realmente excluir a reserva "${reservas[idx].nome}"?`)) {
+                            reservas.splice(idx, 1);
+                            salvarDadosFirebase();
+                            renderReservas();
+                            renderInicio();
+                        }
+                    });
+                });
+
+                setTimeout(() => {
+                    desenharGraficoDistribuicaoReservas();
+                }, 100);
+            }
+
+            // ---------- MODAL DE EDIÇÃO ----------
             function abrirModalEdicao(idx) {
                 if (idx < 0 || idx >= reservas.length) return;
                 reservaEditando = idx;
                 const r = reservas[idx];
 
                 editNomeReserva.value = r.nome;
+                editMoedaReserva.value = r.moeda || MOEDA_PADRAO;
                 editValorReserva.value = r.valor;
                 editDataReserva.value = r.data;
                 inputSaqueParcial.value = '';
@@ -2671,6 +2828,7 @@
                 if (reservaEditando === null) return;
 
                 const nome = editNomeReserva.value.trim();
+                const moeda = editMoedaReserva.value;
                 const valor = parseFloat(editValorReserva.value);
                 const data = editDataReserva.value;
 
@@ -2681,6 +2839,7 @@
                 reservas[reservaEditando] = {
                     ...reservas[reservaEditando],
                     nome: nome,
+                    moeda: moeda,
                     valor: valor,
                     data: data
                 };
@@ -2692,10 +2851,12 @@
                 atualizarEstatisticas();
             }
 
+            // ---------- AÇÕES RÁPIDAS NO MODAL ----------
             function aplicarSaqueParcial() {
                 if (reservaEditando === null) return;
                 const valorSaque = parseFloat(inputSaqueParcial.value);
                 const reservaAtual = reservas[reservaEditando];
+                const moeda = reservaAtual.moeda || MOEDA_PADRAO;
 
                 if (isNaN(valorSaque) || valorSaque <= 0) {
                     alert('Informe um valor de saque válido.');
@@ -2703,7 +2864,7 @@
                 }
 
                 if (valorSaque > reservaAtual.valor) {
-                    alert(`Saldo insuficiente. Você tem ${formatarMoeda(reservaAtual.valor)} disponível.`);
+                    alert(`Saldo insuficiente. Você tem ${formatarMoeda(reservaAtual.valor, moeda)} disponível.`);
                     return;
                 }
 
@@ -2711,26 +2872,68 @@
                 editValorReserva.value = novoValor;
                 inputSaqueParcial.value = '';
 
-                alert(`✅ Saque de ${formatarMoeda(valorSaque)} realizado com sucesso!\nNovo saldo: ${formatarMoeda(novoValor)}`);
+                alert(`✅ Saque de ${formatarMoeda(valorSaque, moeda)} realizado com sucesso!\nNovo saldo: ${formatarMoeda(novoValor, moeda)}`);
             }
 
             function aplicarSaqueTotal() {
                 if (reservaEditando === null) return;
                 const reservaAtual = reservas[reservaEditando];
+                const moeda = reservaAtual.moeda || MOEDA_PADRAO;
 
-                if (!confirm(`Deseja realmente sacar o valor total de ${formatarMoeda(reservaAtual.valor)} da reserva "${reservaAtual.nome}"?`)) {
+                if (!confirm(`Deseja realmente sacar o valor total de ${formatarMoeda(reservaAtual.valor, moeda)} da reserva "${reservaAtual.nome}"?`)) {
                     return;
                 }
 
                 editValorReserva.value = 0;
                 inputSaqueParcial.value = '';
 
-                alert(`✅ Saque total de ${formatarMoeda(reservaAtual.valor)} realizado com sucesso!\nSaldo zerado.`);
+                alert(`✅ Saque total de ${formatarMoeda(reservaAtual.valor, moeda)} realizado com sucesso!\nSaldo zerado.`);
+            }
+
+            // ---------- ZERAR TODOS OS DADOS ----------
+            function zerarTodosOsDados() {
+                const confirmacao = confirm(
+                    '⚠️ ATENÇÃO! Você está prestes a APAGAR TODOS OS DADOS!\n\n' +
+                    'Isso inclui:\n' +
+                    '• Todos os lançamentos (receitas, despesas, faturas, aumentos de limite)\n' +
+                    '• Todas as reservas\n' +
+                    '• Todas as categorias\n' +
+                    '• Limite de crédito\n\n' +
+                    'Esta ação é IRREVERSÍVEL!\n\n' +
+                    'Deseja continuar?'
+                );
+
+                if (!confirmacao) return;
+
+                const confirmacao2 = confirm(
+                    '🔴 ÚLTIMA CHANCE!\n\n' +
+                    'Todos os seus dados serão PERMANENTEMENTE EXCLUÍDOS.\n' +
+                    'Tem certeza que deseja continuar?'
+                );
+
+                if (!confirmacao2) return;
+
+                try {
+                    lancamentos = [];
+                    reservas = [];
+                    categorias = ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'];
+                    limiteCredito = 0;
+
+                    salvarDadosFirebase();
+                    renderTudo();
+
+                    alert('✅ Todos os dados foram zerados com sucesso!');
+
+                } catch (error) {
+                    console.error('Erro ao zerar dados:', error);
+                    alert('❌ Ocorreu um erro ao tentar zerar os dados. Tente novamente.');
+                }
             }
 
             // ---------- ADICIONAR LANÇAMENTO ----------
             function adicionarLancamento() {
                 const tipo = tipoLanc.value;
+                const moeda = moedaLanc.value;
                 const categoria = categoriaLanc.value;
                 const desc = descLanc.value.trim();
                 const valor = parseFloat(valorLanc.value);
@@ -2759,6 +2962,7 @@
                 lancamentos.push({
                     id: Date.now() + Math.random(),
                     tipo: tipo,
+                    moeda: moeda,
                     categoria: categoria || 'Sem categoria',
                     descricao: desc,
                     valor: valor,
@@ -2778,6 +2982,7 @@
             // ---------- ADICIONAR RESERVA ----------
             function adicionarReserva() {
                 const nome = nomeReserva.value.trim();
+                const moeda = moedaReserva.value;
                 const valor = parseFloat(valorReserva.value);
                 const data = dataReserva.value;
 
@@ -2788,6 +2993,7 @@
                 reservas.push({
                     id: Date.now() + Math.random(),
                     nome: nome,
+                    moeda: moeda,
                     valor: valor,
                     data: data,
                     criadoEm: new Date().toISOString()
@@ -2818,12 +3024,14 @@
                     'Descrição': l.descricao,
                     'Tipo': l.tipo,
                     'Categoria': l.categoria || '',
+                    'Moeda': l.moeda || MOEDA_PADRAO,
                     'Valor': l.valor,
                     'Parcelas': l.parcelas ? l.parcelas.join('|') : ''
                 }));
 
                 const reservasData = reservas.map(r => ({
                     'Nome': r.nome,
+                    'Moeda': r.moeda || MOEDA_PADRAO,
                     'Valor': r.valor,
                     'Data': r.data
                 }));
@@ -2844,7 +3052,7 @@
 
                 let csvContent = '';
                 csvContent += '=== LANÇAMENTOS ===\n';
-                const lancHeaders = ['Data', 'Descrição', 'Tipo', 'Categoria', 'Valor', 'Parcelas'];
+                const lancHeaders = ['Data', 'Descrição', 'Tipo', 'Categoria', 'Moeda', 'Valor', 'Parcelas'];
                 csvContent += lancHeaders.join(',') + '\n';
                 dados.lancamentos.forEach(l => {
                     csvContent += [
@@ -2852,16 +3060,17 @@
                         `"${l.Descrição}"`,
                         l.Tipo,
                         `"${l.Categoria}"`,
+                        l.Moeda,
                         l.Valor,
                         `"${l.Parcelas}"`
                     ].join(',') + '\n';
                 });
 
                 csvContent += '\n=== RESERVAS ===\n';
-                const resHeaders = ['Nome', 'Valor', 'Data'];
+                const resHeaders = ['Nome', 'Moeda', 'Valor', 'Data'];
                 csvContent += resHeaders.join(',') + '\n';
                 dados.reservas.forEach(r => {
-                    csvContent += [`"${r.Nome}"`, r.Valor, r.Data].join(',') + '\n';
+                    csvContent += [`"${r.Nome}"`, r.Moeda, r.Valor, r.Data].join(',') + '\n';
                 });
 
                 csvContent += '\n=== CATEGORIAS ===\n';
@@ -2922,7 +3131,7 @@
                     URL.revokeObjectURL(link.href);
                 } catch (error) {
                     console.error('Erro ao exportar Excel:', error);
-                    alert('Erro ao exportar Excel.');
+                    alert('Erro ao exportar Excel. Verifique o console para mais detalhes.');
                 }
             }
 
@@ -3014,6 +3223,7 @@
 
                         let importados = 0;
                         let reservasImp = 0;
+                        let categoriasImp = 0;
 
                         if (lancamentosImportados.length > 0) {
                             lancamentosImportados.forEach(l => {
@@ -3025,6 +3235,7 @@
                                     lancamentos.push({
                                         id: Date.now() + Math.random(),
                                         tipo: l.Tipo || 'despesa',
+                                        moeda: l.Moeda || MOEDA_PADRAO,
                                         categoria: l.Categoria || 'Sem categoria',
                                         descricao: l.Descrição,
                                         valor: l.Valor,
@@ -3035,6 +3246,7 @@
                                     importados++;
                                 }
                             });
+                            salvarDadosFirebase();
                         }
 
                         if (reservasImportadas.length > 0) {
@@ -3043,6 +3255,7 @@
                                     reservas.push({
                                         id: Date.now() + Math.random(),
                                         nome: r.Nome,
+                                        moeda: r.Moeda || MOEDA_PADRAO,
                                         valor: r.Valor,
                                         data: r.Data,
                                         criadoEm: new Date().toISOString()
@@ -3050,6 +3263,7 @@
                                     reservasImp++;
                                 }
                             });
+                            salvarDadosFirebase();
                         }
 
                         if (categoriasImportadas.length > 0) {
@@ -3062,15 +3276,17 @@
                                     if (c && !categorias.includes(c)) categorias.push(c);
                                 });
                             }
+                            salvarDadosFirebase();
+                            categoriasImp = categoriasImportadas.length;
                         }
 
                         fileInput.value = '';
-                        salvarDadosFirebase();
                         renderTudo();
 
                         let msg = '✅ Importação concluída!\n\n';
                         if (importados > 0) msg += `📄 Lançamentos: ${importados} importados\n`;
                         if (reservasImp > 0) msg += `🏦 Reservas: ${reservasImp} importadas\n`;
+                        if (categoriasImp > 0) msg += `🏷️ Categorias: ${categoriasImp} processadas\n`;
                         if (importados === 0 && reservasImp === 0) {
                             msg = '⚠️ Nenhum dado foi importado. Verifique o formato do arquivo.';
                         }
@@ -3078,7 +3294,7 @@
 
                     } catch (error) {
                         console.error('Erro ao importar:', error);
-                        alert('Erro ao importar arquivo.');
+                        alert('Erro ao importar arquivo. Verifique o formato e tente novamente.');
                     }
                 };
 
@@ -3087,6 +3303,17 @@
                 } else {
                     reader.readAsText(file, 'UTF-8');
                 }
+            }
+
+            function renderTudo() {
+                renderCategorias();
+                renderInicio();
+                renderTabela();
+                renderReservas();
+                atualizarEstatisticas();
+                setTimeout(() => {
+                    desenharGraficoDistribuicaoReservas();
+                }, 200);
             }
 
             // ---------- DARK MODE ----------
@@ -3161,6 +3388,7 @@
             btnExportarExcel.addEventListener('click', exportarExcel);
             btnImportarArquivo.addEventListener('click', importarDados);
             btnDarkMode.addEventListener('click', toggleDarkMode);
+            btnZerarDados.addEventListener('click', zerarTodosOsDados);
 
             // Modal
             btnSalvarEdicao.addEventListener('click', salvarEdicaoReserva);
@@ -3195,23 +3423,14 @@
             filtroTipo.addEventListener('change', renderTabela);
             filtroMes.addEventListener('change', renderTabela);
             filtroCategoria.addEventListener('change', renderTabela);
+            filtroMoeda.addEventListener('change', renderTabela);
 
             document.getElementById('btnLimparFiltros').addEventListener('click', function() {
                 filtroTipo.value = 'todos';
                 filtroMes.value = '';
                 filtroCategoria.value = 'todas';
+                filtroMoeda.value = 'todas';
                 renderTabela();
-            });
-
-            currencySelector.addEventListener('change', function() {
-                moedaAtual = this.value;
-                localStorage.setItem('imperio_currency', moedaAtual);
-                renderTudo();
-                setTimeout(() => {
-                    desenharGraficoDistribuicaoReservas();
-                    desenharGraficoReceitasDespesas();
-                    desenharGraficoDespesasCategorias();
-                }, 100);
             });
 
         })();
