@@ -1,0 +1,3385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Império - Controle Financeiro</title>
+    
+    <!-- SheetJS para manipular Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+    </script>
+    
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+
+    <style>
+        /* ============================
+                   RESET E ESTILOS GERAIS
+                ============================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --bg-primary: #f0f2f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-input: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #6c757d;
+            --text-light: #868e96;
+            --border-color: #edf2f7;
+            --border-input: #dee2e6;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --tab-bg: #f1f3f5;
+            --badge-receita-bg: #d4edda;
+            --badge-receita-text: #155724;
+            --badge-despesa-bg: #f8d7da;
+            --badge-despesa-text: #721c24;
+            --badge-aumento-bg: #cce5ff;
+            --badge-aumento-text: #004085;
+            --badge-fatura-bg: #fff3cd;
+            --badge-fatura-text: #856404;
+            --primary-color: #2ecc71;
+            --primary-dark: #27ae60;
+            --danger-color: #e74c3c;
+            --danger-dark: #c0392b;
+        }
+
+        body.dark-mode {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #2d2d44;
+            --bg-card: #2d2d44;
+            --bg-input: #3d3d5c;
+            --text-primary: #e9ecef;
+            --text-secondary: #adb5bd;
+            --text-light: #868e96;
+            --border-color: #3d3d5c;
+            --border-input: #4d4d6e;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+            --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --tab-bg: #2d2d44;
+            --badge-receita-bg: #1e4620;
+            --badge-receita-text: #8fdf9f;
+            --badge-despesa-bg: #4a1a1a;
+            --badge-despesa-text: #f8a0a0;
+            --badge-aumento-bg: #1a2a4a;
+            --badge-aumento-text: #8fcbff;
+            --badge-fatura-bg: #4a3a1a;
+            --badge-fatura-text: #ffd980;
+        }
+
+        body {
+            background: var(--bg-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* ============================
+                   PÁGINA DE LOGIN / REGISTRO
+                ============================ */
+        .auth-container {
+            max-width: 420px;
+            width: 100%;
+            background: var(--bg-secondary);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            padding: 40px 32px;
+            margin: auto;
+            transition: background 0.3s;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-container .logo {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .auth-container .logo span {
+            color: var(--primary-color);
+        }
+
+        .auth-container .subtitle {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+
+        .auth-container .form-group {
+            margin-bottom: 18px;
+        }
+
+        .auth-container .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .auth-container .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1.5px solid var(--border-input);
+            font-size: 15px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            transition: 0.2s;
+        }
+
+        .auth-container .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+        }
+
+        .auth-container .btn-auth {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #fff;
+            background: var(--primary-color);
+        }
+
+        .auth-container .btn-auth:hover {
+            background: var(--primary-dark);
+            transform: scale(1.01);
+        }
+
+        .auth-container .btn-auth:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .auth-container .auth-link {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .auth-container .auth-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-container .auth-link a:hover {
+            text-decoration: underline;
+        }
+
+        .auth-container .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .auth-container .error-message.show {
+            display: block;
+        }
+
+        .auth-container .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .auth-container .success-message.show {
+            display: block;
+        }
+
+        .auth-container .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: var(--text-light);
+            font-size: 13px;
+        }
+
+        .auth-container .divider::before,
+        .auth-container .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .auth-container .divider::before {
+            margin-right: 14px;
+        }
+        .auth-container .divider::after {
+            margin-left: 14px;
+        }
+
+        .auth-container .demo-info {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-light);
+            padding: 12px;
+            background: var(--tab-bg);
+            border-radius: 10px;
+            margin-top: 8px;
+        }
+
+        .auth-container .demo-info strong {
+            color: var(--text-primary);
+        }
+
+        /* ============================
+                   APP CONTAINER (SISTEMA)
+                ============================ */
+        .app-container {
+            max-width: 1200px;
+            width: 100%;
+            background: var(--bg-secondary);
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 24px 28px 40px;
+            transition: background 0.3s;
+            display: none;
+        }
+
+        .app-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* ============================
+                   HEADER DO SISTEMA
+                ============================ */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            color: var(--text-primary);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            transition: color 0.3s;
+        }
+
+        .header h1 span {
+            color: var(--primary-color);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .header-date {
+            color: var(--text-secondary);
+            font-size: 14px;
+            background: var(--tab-bg);
+            padding: 6px 16px;
+            border-radius: 30px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .btn-darkmode {
+            background: var(--tab-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: 0.2s;
+            color: var(--text-primary);
+        }
+
+        .btn-darkmode:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-danger-header {
+            background: var(--danger-color);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-danger-header:hover {
+            background: var(--danger-dark);
+            transform: scale(1.05);
+        }
+
+        .btn-logout {
+            background: #6c757d;
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            padding: 6px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-logout:hover {
+            background: #5a6268;
+            transform: scale(1.05);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .user-info .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .sync-status {
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: var(--tab-bg);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sync-status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .sync-status .dot.online {
+            background: var(--primary-color);
+        }
+        .sync-status .dot.offline {
+            background: var(--danger-color);
+        }
+
+        /* ============================
+                   TABS (ABAS)
+                ============================ */
+        .tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 28px;
+            background: var(--tab-bg);
+            padding: 6px;
+            border-radius: 16px;
+            transition: background 0.3s;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 0;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.25s;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-btn.active {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fade 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fade {
+            0% {
+                opacity: 0.4;
+                transform: translateY(6px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================
+                   CARDS (PÁGINA INICIAL)
+                ============================ */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 18px;
+            padding: 20px 22px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: 0.2s;
+        }
+
+        .card:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-label {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: var(--text-light);
+            margin-bottom: 6px;
+            transition: color 0.3s;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            transition: color 0.3s;
+        }
+
+        .card-value.positive {
+            color: var(--primary-color);
+        }
+        .card-value.negative {
+            color: var(--danger-color);
+        }
+        .card-value.neutral {
+            color: #f39c12;
+        }
+
+        .card-sub {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-top: 4px;
+            transition: color 0.3s;
+        }
+
+        /* ============================
+                   CONTAS A VENCER
+                ============================ */
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: color 0.3s;
+        }
+
+        .section-title small {
+            font-weight: 400;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .vencer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .vencer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-card);
+            padding: 12px 18px;
+            border-radius: 12px;
+            border-left: 4px solid var(--danger-color);
+            flex-wrap: wrap;
+            border: 1px solid var(--border-color);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .vencer-item .desc {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .vencer-item .date {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .vencer-item .value {
+            font-weight: 600;
+            color: var(--danger-color);
+        }
+
+        .empty-message {
+            color: var(--text-light);
+            font-size: 15px;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        /* ============================
+                   FORMULÁRIO (ABA CONTROLE)
+                ============================ */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: color 0.3s;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border-input);
+            font-size: 14px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            transition: 0.2s, background 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-light);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .btn {
+            padding: 10px 28px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: scale(1.02);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background: var(--danger-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--border-input);
+            color: var(--text-secondary);
+        }
+        .btn-outline:hover {
+            background: var(--tab-bg);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: #fff;
+        }
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .btn-sm {
+            padding: 6px 16px;
+            font-size: 12px;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #1a1a2e;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-excel {
+            background: #217346;
+            color: #fff;
+        }
+        .btn-excel:hover {
+            background: #1a5c3a;
+        }
+
+        .btn-edit {
+            background: #6c757d;
+            color: #fff;
+        }
+        .btn-edit:hover {
+            background: #5a6268;
+        }
+
+        /* ============================
+                   TABELA DE LANÇAMENTOS
+                ============================ */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 20px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            transition: border-color 0.3s;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background: var(--tab-bg);
+            text-align: left;
+            padding: 12px 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+            color: var(--text-primary);
+            transition: border-color 0.3s, color 0.3s;
+        }
+
+        tr:hover td {
+            background: var(--tab-bg);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-receita {
+            background: var(--badge-receita-bg);
+            color: var(--badge-receita-text);
+        }
+        .badge-despesa {
+            background: var(--badge-despesa-bg);
+            color: var(--badge-despesa-text);
+        }
+        .badge-aumento {
+            background: var(--badge-aumento-bg);
+            color: var(--badge-aumento-text);
+        }
+        .badge-fatura {
+            background: var(--badge-fatura-bg);
+            color: var(--badge-fatura-text);
+        }
+
+        .text-danger {
+            color: var(--danger-color);
+        }
+        .text-success {
+            color: var(--primary-color);
+        }
+        .text-warning {
+            color: #f39c12;
+        }
+        .text-info {
+            color: #17a2b8;
+        }
+        .fw-bold {
+            font-weight: 600;
+        }
+
+        /* Moeda */
+        .currency-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            background: var(--tab-bg);
+            color: var(--text-secondary);
+        }
+
+        /* ============================
+                   ABA RESERVAS
+                ============================ */
+        .reservas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin: 18px 0 28px;
+        }
+
+        .reserva-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 18px 20px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: background 0.3s, border-color 0.3s;
+            position: relative;
+        }
+
+        .reserva-card .name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+        .reserva-card .value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 4px 0;
+        }
+        .reserva-card .date {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+        .reserva-card .currency {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+
+        .reserva-card .card-actions {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .reserva-card .card-actions .btn {
+            padding: 4px 12px;
+            font-size: 11px;
+        }
+
+        .reserva-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            align-items: flex-end;
+            background: var(--tab-bg);
+            padding: 18px 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            transition: background 0.3s;
+        }
+
+        .reserva-form .form-group {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .reserva-form .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .reserva-chart-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .reserva-chart-container .chart-container {
+            margin-top: 0;
+            min-height: 300px;
+        }
+
+        .reserva-chart-container .chart-container canvas {
+            max-height: 300px;
+        }
+
+        /* Modal de Edição */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transition: background 0.3s;
+        }
+
+        .modal h3 {
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .modal .form-group {
+            margin-bottom: 14px;
+        }
+
+        .modal .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .modal .form-group input,
+        .modal .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border-input);
+            font-size: 14px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            transition: 0.2s;
+        }
+
+        .modal .form-group input:focus,
+        .modal .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+        }
+
+        .modal .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 16px;
+        }
+
+        .modal .saque-area {
+            background: var(--tab-bg);
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .modal .saque-area label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 13px;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .modal .saque-area .saque-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .modal .saque-area .saque-input {
+            margin-top: 6px;
+        }
+
+        .modal .saque-area .saque-input input {
+            width: 100%;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border-input);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .modal .saque-area .saque-input input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        /* ============================
+                   GRÁFICOS
+                ============================ */
+        .chart-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 18px;
+            border: 1px solid var(--border-color);
+            transition: background 0.3s, border-color 0.3s;
+            position: relative;
+            min-height: 280px;
+        }
+
+        .chart-container canvas {
+            width: 100% !important;
+            height: auto !important;
+            max-height: 300px;
+        }
+
+        .chart-container .chart-empty {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--text-light);
+            font-size: 15px;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        /* ============================
+                   ESTATÍSTICAS
+                ============================ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+            margin-top: 16px;
+        }
+
+        .stats-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .stats-card h4 {
+            color: var(--text-primary);
+            font-size: 16px;
+            margin-bottom: 12px;
+            text-align: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .stats-card .chart-container {
+            margin-top: 0;
+            min-height: 220px;
+            border: none;
+            padding: 10px;
+        }
+
+        .stats-card .chart-container canvas {
+            max-height: 220px;
+        }
+
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stats-summary .stat-item {
+            background: var(--tab-bg);
+            border-radius: 12px;
+            padding: 14px 18px;
+            text-align: center;
+            transition: background 0.3s;
+        }
+
+        .stats-summary .stat-item .label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .stats-summary .stat-item .value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .stats-summary .stat-item .value.positive {
+            color: var(--primary-color);
+        }
+        .stats-summary .stat-item .value.negative {
+            color: var(--danger-color);
+        }
+        .stats-summary .stat-item .value.neutral {
+            color: #f39c12;
+        }
+
+        /* ============================
+                   CATEGORIAS
+                ============================ */
+        .categoria-form {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 12px 0 18px;
+            padding: 12px 16px;
+            background: var(--tab-bg);
+            border-radius: 12px;
+            transition: background 0.3s;
+        }
+
+        .categoria-form .form-group {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .categoria-form .btn {
+            padding: 8px 20px;
+        }
+
+        .categoria-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 8px 0 12px;
+        }
+
+        .categoria-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--tab-bg);
+            padding: 4px 12px 4px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        .categoria-tag .remove-cat {
+            cursor: pointer;
+            color: var(--danger-color);
+            font-weight: 700;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .categoria-tag .remove-cat:hover {
+            transform: scale(1.2);
+        }
+
+        /* ============================
+                   IMPORTAÇÃO/EXPORTAÇÃO
+                ============================ */
+        .import-export-area {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 16px 0 20px;
+            padding: 16px;
+            background: var(--tab-bg);
+            border-radius: 14px;
+            align-items: center;
+            transition: background 0.3s;
+            flex-wrap: wrap;
+        }
+
+        .import-export-area .divider {
+            color: var(--text-light);
+            font-weight: 300;
+            padding: 0 4px;
+        }
+
+        .import-export-area .form-group {
+            flex: 0 0 auto;
+        }
+
+        .import-export-area input[type="file"] {
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border-input);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            max-width: 200px;
+        }
+
+        /* ============================
+                   RESPONSIVO
+                ============================ */
+        @media (max-width: 600px) {
+            .app-container {
+                padding: 16px;
+            }
+            .auth-container {
+                padding: 24px 20px;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .card-value {
+                font-size: 22px;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .vencer-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+            .tabs .tab-btn {
+                font-size: 13px;
+                padding: 10px 0;
+                flex: 0 0 calc(50% - 6px);
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+                margin-top: 8px;
+            }
+            .header-left {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .import-export-area {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .import-export-area input[type="file"] {
+                max-width: 100%;
+            }
+            .import-export-area .divider {
+                display: none;
+            }
+            .modal {
+                padding: 20px;
+                width: 95%;
+            }
+            .reserva-card .card-actions .btn {
+                font-size: 10px;
+                padding: 3px 10px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-summary {
+                grid-template-columns: 1fr 1fr;
+            }
+            .reserva-chart-container {
+                max-width: 100%;
+            }
+            .sync-status {
+                font-size: 10px;
+                padding: 2px 8px;
+            }
+            .user-info .avatar {
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
+            }
+            .user-info span:not(.avatar) {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================
+    TELA DE LOGIN / REGISTRO
+    ============================ -->
+    <div class="auth-container" id="authContainer">
+        <div class="logo">👑 <span>Império</span></div>
+        <div class="subtitle">Controle Financeiro</div>
+
+        <div class="error-message" id="authError"></div>
+        <div class="success-message" id="authSuccess"></div>
+
+        <!-- Formulário de Login -->
+        <div id="loginForm">
+            <div class="form-group">
+                <label>👤 Usuário</label>
+                <input type="text" id="loginUsername" placeholder="Digite seu usuário" />
+            </div>
+            <div class="form-group">
+                <label>🔒 Senha</label>
+                <input type="password" id="loginPassword" placeholder="Digite sua senha" />
+            </div>
+            <button class="btn-auth" id="btnLogin">Entrar</button>
+
+            <div class="divider">ou</div>
+
+            <div class="auth-link">
+                Não tem uma conta? <a href="#" id="showRegister">Criar conta</a>
+            </div>
+
+            <div class="demo-info">
+                🔑 <strong>Demonstração:</strong> usuário: <strong>demo</strong> | senha: <strong>demo123</strong>
+            </div>
+        </div>
+
+        <!-- Formulário de Registro -->
+        <div id="registerForm" style="display:none;">
+            <div class="form-group">
+                <label>👤 Usuário</label>
+                <input type="text" id="registerUsername" placeholder="Escolha um usuário" />
+            </div>
+            <div class="form-group">
+                <label>🔒 Senha</label>
+                <input type="password" id="registerPassword" placeholder="Crie uma senha" />
+            </div>
+            <div class="form-group">
+                <label>🔒 Confirmar Senha</label>
+                <input type="password" id="registerConfirmPassword" placeholder="Confirme sua senha" />
+            </div>
+            <button class="btn-auth" id="btnRegister">Criar Conta</button>
+
+            <div class="divider">ou</div>
+
+            <div class="auth-link">
+                Já tem uma conta? <a href="#" id="showLogin">Fazer login</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================
+    SISTEMA FINANCEIRO (APÓS LOGIN)
+    ============================ -->
+    <div class="app-container" id="appContainer">
+
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header-left">
+                <h1>👑 <span>Império</span></h1>
+                <div class="user-info">
+                    <div class="avatar" id="userAvatar">U</div>
+                    <span id="userNameDisplay">Usuário</span>
+                </div>
+                <div class="sync-status">
+                    <span class="dot online" id="syncDot"></span>
+                    <span id="syncText">Local</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="header-date" id="headerDate"></div>
+                <button class="btn-darkmode" id="btnDarkMode" title="Alternar tema">🌙</button>
+                <button class="btn-danger-header" id="btnZerarDados" title="Apagar todos os dados">🗑️ Zerar</button>
+                <button class="btn-logout" id="btnLogout">🚪 Sair</button>
+            </div>
+        </header>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="tab1">📊 Início</button>
+            <button class="tab-btn" data-tab="tab2">✏️ Controle</button>
+            <button class="tab-btn" data-tab="tab3">🏦 Reservas</button>
+            <button class="tab-btn" data-tab="tab4">📈 Estatísticas</button>
+        </div>
+
+        <!-- ABA 1 – INÍCIO -->
+        <div class="tab-content active" id="tab1">
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-label">💰 Saldo disponível</div>
+                    <div class="card-value positive" id="saldoDisponivel">R$ 0,00</div>
+                    <div class="card-sub">Receitas - Despesas - Faturas</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">💳 Crédito disponível</div>
+                    <div class="card-value neutral" id="creditoDisponivel">R$ 0,00</div>
+                    <div class="card-sub">Limite - Faturas</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">🏦 Reserva financeira</div>
+                    <div class="card-value positive" id="totalReservas">R$ 0,00</div>
+                    <div class="card-sub">Total em reservas</div>
+                </div>
+            </div>
+
+            <div class="section-title">
+                📅 Contas a vencer (próximos 7 dias)
+                <small>— fique atento!</small>
+            </div>
+            <div class="vencer-list" id="vencerList">
+                <div class="empty-message">Nenhuma conta próxima do vencimento.</div>
+            </div>
+        </div>
+
+        <!-- ABA 2 – CONTROLE -->
+        <div class="tab-content" id="tab2">
+            <h3 style="margin-bottom:12px; color:var(--text-primary);">➕ Novo lançamento</h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="tipoLancamento">
+                        <option value="receita">Receita</option>
+                        <option value="despesa">Despesa</option>
+                        <option value="aumento_limite">📈 Aumento de Limite</option>
+                        <option value="fatura">💳 Fatura do Mês</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Moeda</label>
+                    <select id="moedaLancamento">
+                        <option value="BRL">🇧🇷 Real (R$)</option>
+                        <option value="USD">🇺🇸 Dólar ($)</option>
+                        <option value="EUR">🇪🇺 Euro (€)</option>
+                        <option value="AUD">🇦🇺 Dólar Australiano (AU$)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="categoriaLancamento">
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <input type="text" id="descLancamento" placeholder="Ex: Salário, Aluguel..." />
+                </div>
+                <div class="form-group">
+                    <label>Valor</label>
+                    <input type="number" id="valorLancamento" placeholder="0,00" step="0.01" />
+                </div>
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" id="dataLancamento" />
+                </div>
+                <div class="form-group">
+                    <label>Parcelas</label>
+                    <input type="number" id="parcelasLancamento" value="1" min="1" max="60" />
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" id="btnAddLancamento">✅ Adicionar</button>
+                <button class="btn btn-outline" id="btnLimparFiltros">🔄 Limpar filtros</button>
+            </div>
+
+            <!-- Gerenciar Categorias -->
+            <div class="categoria-form">
+                <span style="font-weight:600; color:var(--text-secondary);">🏷️ Categorias:</span>
+                <div class="form-group" style="flex:1; min-width:140px;">
+                    <input type="text" id="novaCategoria" placeholder="Nova categoria..." />
+                </div>
+                <button class="btn btn-info btn-sm" id="btnAddCategoria">➕ Adicionar</button>
+                <div class="categoria-tags" id="categoriaTags"></div>
+            </div>
+
+            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin:12px 0;">
+                <span style="font-weight:600; color:var(--text-secondary);">Filtrar por:</span>
+                <select id="filtroTipo" style="padding:6px 12px; border-radius:8px; border:1px solid var(--border-input); background:var(--bg-input); color:var(--text-primary);">
+                    <option value="todos">Todos</option>
+                    <option value="receita">Receitas</option>
+                    <option value="despesa">Despesas</option>
+                    <option value="aumento_limite">Aumento de Limite</option>
+                    <option value="fatura">Faturas</option>
+                </select>
+                <input type="month" id="filtroMes" style="padding:6px 12px; border-radius:8px; border:1px solid var(--border-input); background:var(--bg-input); color:var(--text-primary);" />
+                <select id="filtroCategoria" style="padding:6px 12px; border-radius:8px; border:1px solid var(--border-input); background:var(--bg-input); color:var(--text-primary);">
+                    <option value="todas">Todas categorias</option>
+                </select>
+                <select id="filtroMoeda" style="padding:6px 12px; border-radius:8px; border:1px solid var(--border-input); background:var(--bg-input); color:var(--text-primary);">
+                    <option value="todas">Todas moedas</option>
+                    <option value="BRL">🇧🇷 Real</option>
+                    <option value="USD">🇺🇸 Dólar</option>
+                    <option value="EUR">🇪🇺 Euro</option>
+                    <option value="AUD">🇦🇺 Dólar Australiano</option>
+                </select>
+            </div>
+
+            <!-- Importação / Exportação -->
+            <div class="import-export-area">
+                <span style="font-weight:600; color:var(--text-secondary); font-size:13px;">📂 Exportar:</span>
+                <button class="btn btn-success btn-sm" id="btnExportarCSV">📄 CSV</button>
+                <button class="btn btn-excel btn-sm" id="btnExportarExcel">📊 Excel</button>
+
+                <span class="divider">|</span>
+
+                <span style="font-weight:600; color:var(--text-secondary); font-size:13px;">📥 Importar:</span>
+                <div class="form-group" style="flex:0 0 auto;">
+                    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" />
+                </div>
+                <button class="btn btn-warning btn-sm" id="btnImportarArquivo">📥 Importar</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>Tipo</th>
+                            <th>Categoria</th>
+                            <th>Moeda</th>
+                            <th>Valor</th>
+                            <th>Parcelas</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaLancamentos">
+                        <tr><td colspan="8" style="text-align:center; color:var(--text-light);">Nenhum lançamento ainda.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ABA 3 – RESERVAS -->
+        <div class="tab-content" id="tab3">
+            <h3 style="margin-bottom:6px; color:var(--text-primary);">🏦 Reservas financeiras</h3>
+            <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">Acompanhe seus fundos e evolução.</p>
+
+            <div class="reservas-grid" id="reservasGrid">
+                <div class="empty-message" style="grid-column:1/-1;">Nenhuma reserva cadastrada.</div>
+            </div>
+
+            <div class="reserva-form">
+                <div class="form-group">
+                    <label>Nome da reserva</label>
+                    <input type="text" id="nomeReserva" placeholder="Ex: Emergência, Viagem..." />
+                </div>
+                <div class="form-group">
+                    <label>Moeda</label>
+                    <select id="moedaReserva">
+                        <option value="BRL">🇧🇷 Real (R$)</option>
+                        <option value="USD">🇺🇸 Dólar ($)</option>
+                        <option value="EUR">🇪🇺 Euro (€)</option>
+                        <option value="AUD">🇦🇺 Dólar Australiano (AU$)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Valor</label>
+                    <input type="number" id="valorReserva" placeholder="0,00" step="0.01" />
+                </div>
+                <div class="form-group">
+                    <label>Data (histórico)</label>
+                    <input type="date" id="dataReserva" />
+                </div>
+                <div class="form-group" style="justify-content:flex-end;">
+                    <button class="btn btn-primary" id="btnAddReserva">➕ Registrar</button>
+                </div>
+            </div>
+
+            <!-- Gráfico de Pizza - Distribuição das Reservas -->
+            <div class="reserva-chart-container">
+                <div class="chart-container">
+                    <h4 style="text-align:center; color:var(--text-primary); margin-bottom:8px;">📊 Distribuição das Reservas</h4>
+                    <canvas id="graficoDistribuicaoReservas"></canvas>
+                    <div class="chart-empty" id="chartEmptyDistribuicao">Nenhuma reserva para exibir.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA 4 – ESTATÍSTICAS -->
+        <div class="tab-content" id="tab4">
+            <h3 style="margin-bottom:16px; color:var(--text-primary);">📈 Estatísticas Financeiras</h3>
+
+            <div class="stats-summary" id="statsSummary">
+                <div class="stat-item">
+                    <div class="label">Total de Receitas</div>
+                    <div class="value positive" id="statTotalReceitas">R$ 0,00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Total de Despesas</div>
+                    <div class="value negative" id="statTotalDespesas">R$ 0,00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Total de Faturas</div>
+                    <div class="value negative" id="statTotalFaturas">R$ 0,00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Saldo</div>
+                    <div class="value neutral" id="statSaldo">R$ 0,00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Total de Lançamentos</div>
+                    <div class="value" id="statTotalLancamentos" style="color:var(--text-primary);">0</div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <h4>🍕 Receitas vs Despesas</h4>
+                    <div class="chart-container">
+                        <canvas id="graficoReceitasDespesas"></canvas>
+                    </div>
+                </div>
+
+                <div class="stats-card">
+                    <h4>🏷️ Despesas por Categoria</h4>
+                    <div class="chart-container">
+                        <canvas id="graficoDespesasCategorias"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-card" style="margin-top:20px;">
+                <h4>📊 Resumo por Categoria</h4>
+                <div style="overflow-x:auto; margin-top:10px;">
+                    <table style="width:100%; font-size:13px;">
+                        <thead>
+                            <tr>
+                                <th>Categoria</th>
+                                <th>Total</th>
+                                <th>%</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaResumoCategorias">
+                            <tr><td colspan="3" style="text-align:center; color:var(--text-light);">Nenhum dado disponível.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================
+    MODAL DE EDIÇÃO DE RESERVA
+    ============================ -->
+    <div class="modal-overlay" id="modalEditarReserva">
+        <div class="modal">
+            <h3>✏️ Editar Reserva</h3>
+            
+            <div class="form-group">
+                <label>Nome da reserva</label>
+                <input type="text" id="editNomeReserva" />
+            </div>
+            
+            <div class="form-group">
+                <label>Moeda</label>
+                <select id="editMoedaReserva">
+                    <option value="BRL">🇧🇷 Real (R$)</option>
+                    <option value="USD">🇺🇸 Dólar ($)</option>
+                    <option value="EUR">🇪🇺 Euro (€)</option>
+                    <option value="AUD">🇦🇺 Dólar Australiano (AU$)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Valor atual</label>
+                <input type="number" id="editValorReserva" step="0.01" />
+            </div>
+            
+            <div class="form-group">
+                <label>Data</label>
+                <input type="date" id="editDataReserva" />
+            </div>
+
+            <div class="saque-area">
+                <label>💡 Ações rápidas:</label>
+                <div class="saque-buttons">
+                    <button class="btn btn-warning btn-sm" id="btnSaqueParcial">💰 Sacar parcial</button>
+                    <button class="btn btn-danger btn-sm" id="btnSaqueTotal">💳 Sacar total</button>
+                </div>
+                <div class="saque-input">
+                    <input type="number" id="inputSaqueParcial" placeholder="Valor do saque..." step="0.01" />
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-outline" id="btnCancelarEdicao">Cancelar</button>
+                <button class="btn btn-primary" id="btnSalvarEdicao">💾 Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  SISTEMA DE AUTENTICAÇÃO (LOCAL) - CORRIGIDO PARA GITHUB PAGES
+        // ============================================================
+
+        (function() {
+            'use strict';
+
+            // Garantir que o DOM está carregado
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initAuth);
+            } else {
+                initAuth();
+            }
+
+            function initAuth() {
+                const STORAGE_USERS = 'imperio_users';
+                const STORAGE_SESSION = 'imperio_session';
+
+                // Elementos de autenticação
+                const authContainer = document.getElementById('authContainer');
+                const appContainer = document.getElementById('appContainer');
+                const loginForm = document.getElementById('loginForm');
+                const registerForm = document.getElementById('registerForm');
+                const authError = document.getElementById('authError');
+                const authSuccess = document.getElementById('authSuccess');
+
+                const loginUsername = document.getElementById('loginUsername');
+                const loginPassword = document.getElementById('loginPassword');
+                const btnLogin = document.getElementById('btnLogin');
+
+                const registerUsername = document.getElementById('registerUsername');
+                const registerPassword = document.getElementById('registerPassword');
+                const registerConfirmPassword = document.getElementById('registerConfirmPassword');
+                const btnRegister = document.getElementById('btnRegister');
+
+                const showRegister = document.getElementById('showRegister');
+                const showLogin = document.getElementById('showLogin');
+
+                const btnLogout = document.getElementById('btnLogout');
+                const userAvatar = document.getElementById('userAvatar');
+                const userNameDisplay = document.getElementById('userNameDisplay');
+
+                // ---------- FUNÇÕES ----------
+                function getUsers() {
+                    try {
+                        const raw = localStorage.getItem(STORAGE_USERS);
+                        return raw ? JSON.parse(raw) : {};
+                    } catch (e) { return {}; }
+                }
+
+                function saveUsers(users) {
+                    localStorage.setItem(STORAGE_USERS, JSON.stringify(users));
+                }
+
+                function getSession() {
+                    try {
+                        const raw = localStorage.getItem(STORAGE_SESSION);
+                        return raw ? JSON.parse(raw) : null;
+                    } catch (e) { return null; }
+                }
+
+                function saveSession(username) {
+                    localStorage.setItem(STORAGE_SESSION, JSON.stringify({ username: username, loginTime: new Date()
+                            .toISOString() }));
+                }
+
+                function clearSession() {
+                    localStorage.removeItem(STORAGE_SESSION);
+                }
+
+                function showError(msg) {
+                    if (!authError) return;
+                    authError.textContent = msg;
+                    authError.classList.add('show');
+                    if (authSuccess) authSuccess.classList.remove('show');
+                    setTimeout(() => {
+                        if (authError) authError.classList.remove('show');
+                    }, 4000);
+                }
+
+                function showSuccess(msg) {
+                    if (!authSuccess) return;
+                    authSuccess.textContent = msg;
+                    authSuccess.classList.add('show');
+                    if (authError) authError.classList.remove('show');
+                    setTimeout(() => {
+                        if (authSuccess) authSuccess.classList.remove('show');
+                    }, 3000);
+                }
+
+                // ---------- LOGIN ----------
+                function doLogin() {
+                    const username = loginUsername.value.trim();
+                    const password = loginPassword.value.trim();
+
+                    if (!username || !password) {
+                        showError('Preencha usuário e senha.');
+                        return;
+                    }
+
+                    const users = getUsers();
+
+                    if (!users[username]) {
+                        showError('Usuário não encontrado.');
+                        return;
+                    }
+
+                    if (users[username] !== password) {
+                        showError('Senha incorreta.');
+                        return;
+                    }
+
+                    saveSession(username);
+                    showSuccess('Login realizado com sucesso!');
+                    setTimeout(() => {
+                        entrarNoSistema(username);
+                    }, 500);
+                }
+
+                // ---------- REGISTRO ----------
+                function doRegister() {
+                    const username = registerUsername.value.trim();
+                    const password = registerPassword.value.trim();
+                    const confirm = registerConfirmPassword.value.trim();
+
+                    if (!username || !password || !confirm) {
+                        showError('Preencha todos os campos.');
+                        return;
+                    }
+
+                    if (username.length < 3) {
+                        showError('Usuário deve ter pelo menos 3 caracteres.');
+                        return;
+                    }
+
+                    if (password.length < 4) {
+                        showError('Senha deve ter pelo menos 4 caracteres.');
+                        return;
+                    }
+
+                    if (password !== confirm) {
+                        showError('As senhas não coincidem.');
+                        return;
+                    }
+
+                    const users = getUsers();
+
+                    if (users[username]) {
+                        showError('Usuário já existe. Escolha outro nome.');
+                        return;
+                    }
+
+                    users[username] = password;
+                    saveUsers(users);
+
+                    showSuccess('✅ Conta criada com sucesso! Faça login.');
+                    setTimeout(() => {
+                        toggleForms('login');
+                        loginUsername.value = username;
+                        loginPassword.value = '';
+                    }, 500);
+                }
+
+                // ---------- ENTRAR/SAIR ----------
+                function entrarNoSistema(username) {
+                    if (!authContainer || !appContainer) return;
+                    authContainer.style.display = 'none';
+                    appContainer.classList.add('active');
+
+                    const initial = username.charAt(0).toUpperCase();
+                    if (userAvatar) userAvatar.textContent = initial;
+                    if (userNameDisplay) userNameDisplay.textContent = username;
+
+                    if (typeof inicializarSistema === 'function') {
+                        inicializarSistema(username);
+                    }
+                }
+
+                function sairDoSistema() {
+                    clearSession();
+                    if (authContainer) authContainer.style.display = 'block';
+                    if (appContainer) appContainer.classList.remove('active');
+                    if (loginPassword) loginPassword.value = '';
+                    if (registerUsername) registerUsername.value = '';
+                    if (registerPassword) registerPassword.value = '';
+                    if (registerConfirmPassword) registerConfirmPassword.value = '';
+                    if (authError) authError.classList.remove('show');
+                    if (authSuccess) authSuccess.classList.remove('show');
+                }
+
+                // ---------- ALTERNAR FORMULÁRIOS ----------
+                function toggleForms(form) {
+                    if (form === 'login') {
+                        if (loginForm) loginForm.style.display = 'block';
+                        if (registerForm) registerForm.style.display = 'none';
+                    } else {
+                        if (loginForm) loginForm.style.display = 'none';
+                        if (registerForm) registerForm.style.display = 'block';
+                    }
+                    if (authError) authError.classList.remove('show');
+                    if (authSuccess) authSuccess.classList.remove('show');
+                }
+
+                // ---------- VERIFICAR SESSÃO ----------
+                function verificarSessao() {
+                    const session = getSession();
+                    if (session && session.username) {
+                        const users = getUsers();
+                        if (users[session.username]) {
+                            entrarNoSistema(session.username);
+                            return true;
+                        } else {
+                            clearSession();
+                        }
+                    }
+                    return false;
+                }
+
+                // ---------- CRIAR USUÁRIO DEMO ----------
+                function criarUsuarioDemo() {
+                    try {
+                        const users = getUsers();
+                        if (!users['demo']) {
+                            users['demo'] = 'demo123';
+                            saveUsers(users);
+                            console.log('✅ Usuário demo criado: demo / demo123');
+                        }
+                    } catch (e) {
+                        console.log('Erro ao criar usuário demo:', e);
+                    }
+                }
+
+                // ---------- EVENTOS ----------
+                if (btnLogin) {
+                    btnLogin.addEventListener('click', doLogin);
+                }
+                if (loginPassword) {
+                    loginPassword.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') doLogin();
+                    });
+                }
+                if (loginUsername) {
+                    loginUsername.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') loginPassword.focus();
+                    });
+                }
+
+                if (btnRegister) {
+                    btnRegister.addEventListener('click', doRegister);
+                }
+                if (registerConfirmPassword) {
+                    registerConfirmPassword.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') doRegister();
+                    });
+                }
+
+                if (showRegister) {
+                    showRegister.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        toggleForms('register');
+                    });
+                }
+
+                if (showLogin) {
+                    showLogin.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        toggleForms('login');
+                    });
+                }
+
+                if (btnLogout) {
+                    btnLogout.addEventListener('click', function() {
+                        if (confirm('Deseja realmente sair?')) {
+                            sairDoSistema();
+                        }
+                    });
+                }
+
+                // ---------- INICIALIZAÇÃO ----------
+                criarUsuarioDemo();
+
+                if (!verificarSessao()) {
+                    if (authContainer) authContainer.style.display = 'block';
+                    if (appContainer) appContainer.classList.remove('active');
+                }
+
+                // Expor funções para debug
+                window._auth = {
+                    getUsers: getUsers,
+                    saveUsers: saveUsers,
+                    getSession: getSession,
+                    clearSession: clearSession
+                };
+            }
+
+        })();
+
+
+        // ============================================================
+        //  SISTEMA FINANCEIRO (APÓS LOGIN)
+        // ============================================================
+
+        (function() {
+            'use strict';
+
+            // Garantir que o DOM está carregado
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initFinanceiro);
+            } else {
+                initFinanceiro();
+            }
+
+            function initFinanceiro() {
+                // ---------- CHAVES DO localStorage ----------
+                const STORAGE_LANCAMENTOS = 'imperio_lancamentos';
+                const STORAGE_RESERVAS = 'imperio_reservas';
+                const STORAGE_CATEGORIAS = 'imperio_categorias';
+                const STORAGE_DARKMODE = 'imperio_darkmode';
+                const STORAGE_LIMITE_CREDITO = 'imperio_limite_credito';
+
+                // ---------- ELEMENTOS DOM ----------
+                const saldoEl = document.getElementById('saldoDisponivel');
+                const creditoEl = document.getElementById('creditoDisponivel');
+                const totalReservasEl = document.getElementById('totalReservas');
+                const vencerList = document.getElementById('vencerList');
+                const tabelaBody = document.getElementById('tabelaLancamentos');
+                const reservasGrid = document.getElementById('reservasGrid');
+
+                const tipoLanc = document.getElementById('tipoLancamento');
+                const moedaLanc = document.getElementById('moedaLancamento');
+                const categoriaLanc = document.getElementById('categoriaLancamento');
+                const descLanc = document.getElementById('descLancamento');
+                const valorLanc = document.getElementById('valorLancamento');
+                const dataLanc = document.getElementById('dataLancamento');
+                const parcelasLanc = document.getElementById('parcelasLancamento');
+                const btnAdd = document.getElementById('btnAddLancamento');
+
+                const filtroTipo = document.getElementById('filtroTipo');
+                const filtroMes = document.getElementById('filtroMes');
+                const filtroCategoria = document.getElementById('filtroCategoria');
+                const filtroMoeda = document.getElementById('filtroMoeda');
+
+                const novaCategoriaInput = document.getElementById('novaCategoria');
+                const btnAddCategoria = document.getElementById('btnAddCategoria');
+                const categoriaTags = document.getElementById('categoriaTags');
+
+                const nomeReserva = document.getElementById('nomeReserva');
+                const moedaReserva = document.getElementById('moedaReserva');
+                const valorReserva = document.getElementById('valorReserva');
+                const dataReserva = document.getElementById('dataReserva');
+                const btnAddReserva = document.getElementById('btnAddReserva');
+
+                const btnExportarCSV = document.getElementById('btnExportarCSV');
+                const btnExportarExcel = document.getElementById('btnExportarExcel');
+                const fileInput = document.getElementById('fileInput');
+                const btnImportarArquivo = document.getElementById('btnImportarArquivo');
+
+                const canvasDistribuicao = document.getElementById('graficoDistribuicaoReservas');
+                let ctxDistribuicao = canvasDistribuicao ? canvasDistribuicao.getContext('2d') : null;
+                let chartDistribuicao = null;
+
+                const canvasReceitasDespesas = document.getElementById('graficoReceitasDespesas');
+                let ctxReceitasDespesas = canvasReceitasDespesas ? canvasReceitasDespesas.getContext('2d') : null;
+                let chartReceitasDespesas = null;
+
+                const canvasDespesasCategorias = document.getElementById('graficoDespesasCategorias');
+                let ctxDespesasCategorias = canvasDespesasCategorias ? canvasDespesasCategorias.getContext('2d') : null;
+                let chartDespesasCategorias = null;
+
+                const btnDarkMode = document.getElementById('btnDarkMode');
+                const btnZerarDados = document.getElementById('btnZerarDados');
+
+                // Modal
+                const modalOverlay = document.getElementById('modalEditarReserva');
+                const editNomeReserva = document.getElementById('editNomeReserva');
+                const editMoedaReserva = document.getElementById('editMoedaReserva');
+                const editValorReserva = document.getElementById('editValorReserva');
+                const editDataReserva = document.getElementById('editDataReserva');
+                const btnSalvarEdicao = document.getElementById('btnSalvarEdicao');
+                const btnCancelarEdicao = document.getElementById('btnCancelarEdicao');
+                const btnSaqueParcial = document.getElementById('btnSaqueParcial');
+                const btnSaqueTotal = document.getElementById('btnSaqueTotal');
+                const inputSaqueParcial = document.getElementById('inputSaqueParcial');
+
+                // ---------- DADOS ----------
+                let lancamentos = [];
+                let reservas = [];
+                let categorias = [];
+                let limiteCredito = 0;
+                let reservaEditando = null;
+                let currentUser = null;
+
+                // ---------- CONFIGURAÇÃO DE MOEDAS ----------
+                const MOEDAS = {
+                    BRL: { simbolo: 'R$', nome: 'Real', taxa: 1 },
+                    USD: { simbolo: '$', nome: 'Dólar', taxa: 5.7 },
+                    EUR: { simbolo: '€', nome: 'Euro', taxa: 6.2 },
+                    AUD: { simbolo: 'AU$', nome: 'Dólar Australiano', taxa: 3.75 }
+                };
+
+                const MOEDA_PADRAO = 'BRL';
+
+                // ---------- FUNÇÕES DE CARGA / SALVO ----------
+                function carregarDados() {
+                    try {
+                        const rawL = localStorage.getItem(STORAGE_LANCAMENTOS);
+                        lancamentos = rawL ? JSON.parse(rawL) : [];
+                    } catch (e) { lancamentos = []; }
+
+                    try {
+                        const rawR = localStorage.getItem(STORAGE_RESERVAS);
+                        reservas = rawR ? JSON.parse(rawR) : [];
+                    } catch (e) { reservas = []; }
+
+                    try {
+                        const rawC = localStorage.getItem(STORAGE_CATEGORIAS);
+                        categorias = rawC ? JSON.parse(rawC) : ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer',
+                            'Saúde', 'Educação'
+                        ];
+                    } catch (e) {
+                        categorias = ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'];
+                    }
+
+                    try {
+                        const rawLc = localStorage.getItem(STORAGE_LIMITE_CREDITO);
+                        limiteCredito = rawLc ? parseFloat(rawLc) : 0;
+                    } catch (e) { limiteCredito = 0; }
+
+                    try {
+                        const dark = localStorage.getItem(STORAGE_DARKMODE);
+                        if (dark === 'true' && document.body) {
+                            document.body.classList.add('dark-mode');
+                            if (btnDarkMode) btnDarkMode.textContent = '☀️';
+                        }
+                    } catch (e) {}
+
+                    // Garantir que lançamentos antigos tenham moeda
+                    lancamentos = lancamentos.map(l => {
+                        if (!l.moeda) l.moeda = MOEDA_PADRAO;
+                        return l;
+                    });
+
+                    reservas = reservas.map(r => {
+                        if (!r.moeda) r.moeda = MOEDA_PADRAO;
+                        return r;
+                    });
+                }
+
+                function salvarLancamentos() {
+                    localStorage.setItem(STORAGE_LANCAMENTOS, JSON.stringify(lancamentos));
+                }
+
+                function salvarReservas() {
+                    localStorage.setItem(STORAGE_RESERVAS, JSON.stringify(reservas));
+                }
+
+                function salvarCategorias() {
+                    localStorage.setItem(STORAGE_CATEGORIAS, JSON.stringify(categorias));
+                }
+
+                function salvarLimiteCredito() {
+                    localStorage.setItem(STORAGE_LIMITE_CREDITO, JSON.stringify(limiteCredito));
+                }
+
+                // ---------- HELPERS ----------
+                function hoje() {
+                    return new Date().toISOString().slice(0, 10);
+                }
+
+                function dataParaStr(d) {
+                    if (!d) return '';
+                    const dt = new Date(d + 'T00:00:00');
+                    return dt.toLocaleDateString('pt-BR');
+                }
+
+                function getSimboloMoeda(moeda) {
+                    return MOEDAS[moeda]?.simbolo || MOEDAS[MOEDA_PADRAO].simbolo;
+                }
+
+                function formatarMoeda(v, moeda) {
+                    const m = moeda || MOEDA_PADRAO;
+                    const simbolo = getSimboloMoeda(m);
+                    return simbolo + ' ' + v.toFixed(2).replace('.', ',');
+                }
+
+                function calcularParcelasFaturas() {
+                    let totalParcelas = 0;
+                    lancamentos.forEach(l => {
+                        if (l.tipo === 'fatura' && l.parcelas && l.parcelas.length > 0) {
+                            l.parcelas.forEach(p => {
+                                const valorParcela = l.valor / l.parcelas.length;
+                                totalParcelas += valorParcela;
+                            });
+                        }
+                    });
+                    return totalParcelas;
+                }
+
+                function calcularTotalFaturas() {
+                    return lancamentos
+                        .filter(l => l.tipo === 'fatura')
+                        .reduce((s, l) => s + l.valor, 0);
+                }
+
+                // ---------- GRÁFICOS ----------
+                function desenharGraficoDistribuicaoReservas() {
+                    if (!ctxDistribuicao) return;
+                    if (chartDistribuicao) {
+                        chartDistribuicao.destroy();
+                        chartDistribuicao = null;
+                    }
+
+                    if (reservas.length === 0) return;
+
+                    const labels = reservas.map(r => r.nome + ' (' + getSimboloMoeda(r.moeda || MOEDA_PADRAO) + ')');
+                    const valores = reservas.map(r => r.valor);
+                    const total = valores.reduce((a, b) => a + b, 0);
+
+                    const cores = [
+                        '#2ecc71', '#3498db', '#f39c12', '#e74c3c', '#9b59b6',
+                        '#1abc9c', '#e67e22', '#95a5a6', '#2c3e50', '#16a085',
+                        '#8e44ad', '#d35400', '#27ae60', '#2980b9', '#f1c40f'
+                    ];
+
+                    const isDark = document.body ? document.body.classList.contains('dark-mode') : false;
+
+                    chartDistribuicao = new Chart(ctxDistribuicao, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: valores,
+                                backgroundColor: cores.slice(0, labels.length),
+                                borderColor: isDark ? '#2d2d44' : '#ffffff',
+                                borderWidth: 2,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        color: isDark ? '#e9ecef' : '#1a1a2e',
+                                        font: { size: 11 },
+                                        padding: 12
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                            const idx = context.dataIndex;
+                                            const moeda = reservas[idx]?.moeda || MOEDA_PADRAO;
+                                            const valorFormatado = formatarMoeda(context.parsed, moeda);
+                                            return context.label + ': ' + valorFormatado + ' (' + percentage + '%)';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                function desenharGraficoReceitasDespesas() {
+                    if (!ctxReceitasDespesas) return;
+                    if (chartReceitasDespesas) {
+                        chartReceitasDespesas.destroy();
+                        chartReceitasDespesas = null;
+                    }
+
+                    const totalReceitas = lancamentos
+                        .filter(l => l.tipo === 'receita')
+                        .reduce((s, l) => s + l.valor, 0);
+
+                    const totalDespesas = lancamentos
+                        .filter(l => l.tipo === 'despesa')
+                        .reduce((s, l) => s + l.valor, 0);
+
+                    const isDark = document.body ? document.body.classList.contains('dark-mode') : false;
+
+                    if (totalReceitas === 0 && totalDespesas === 0) return;
+
+                    chartReceitasDespesas = new Chart(ctxReceitasDespesas, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Receitas', 'Despesas'],
+                            datasets: [{
+                                data: [totalReceitas, totalDespesas],
+                                backgroundColor: ['#2ecc71', '#e74c3c'],
+                                borderColor: isDark ? '#2d2d44' : '#ffffff',
+                                borderWidth: 2,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        color: isDark ? '#e9ecef' : '#1a1a2e',
+                                        font: { size: 12 },
+                                        padding: 16
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                            return context.label + ': ' + formatarMoeda(context.parsed) + ' (' +
+                                                percentage + '%)';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                function desenharGraficoDespesasCategorias() {
+                    if (!ctxDespesasCategorias) return;
+                    if (chartDespesasCategorias) {
+                        chartDespesasCategorias.destroy();
+                        chartDespesasCategorias = null;
+                    }
+
+                    const despesas = lancamentos.filter(l => l.tipo === 'despesa');
+
+                    if (despesas.length === 0) return;
+
+                    const categoriasDespesas = {};
+                    despesas.forEach(l => {
+                        const cat = l.categoria || 'Sem categoria';
+                        categoriasDespesas[cat] = (categoriasDespesas[cat] || 0) + l.valor;
+                    });
+
+                    const labels = Object.keys(categoriasDespesas);
+                    const valores = Object.values(categoriasDespesas);
+
+                    const cores = [
+                        '#e74c3c', '#f39c12', '#3498db', '#9b59b6', '#1abc9c',
+                        '#e67e22', '#95a5a6', '#2ecc71', '#e74c3c', '#3498db',
+                        '#f1c40f', '#2c3e50', '#8e44ad', '#16a085', '#d35400'
+                    ];
+
+                    const isDark = document.body ? document.body.classList.contains('dark-mode') : false;
+
+                    chartDespesasCategorias = new Chart(ctxDespesasCategorias, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: valores,
+                                backgroundColor: cores.slice(0, labels.length),
+                                borderColor: isDark ? '#2d2d44' : '#ffffff',
+                                borderWidth: 2,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        color: isDark ? '#e9ecef' : '#1a1a2e',
+                                        font: { size: 11 },
+                                        padding: 12
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                            return context.label + ': ' + formatarMoeda(context.parsed) + ' (' +
+                                                percentage + '%)';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // ---------- ATUALIZAR ESTATÍSTICAS ----------
+                function atualizarEstatisticas() {
+                    const totalReceitas = lancamentos
+                        .filter(l => l.tipo === 'receita')
+                        .reduce((s, l) => s + l.valor, 0);
+
+                    const totalDespesas = lancamentos
+                        .filter(l => l.tipo === 'despesa')
+                        .reduce((s, l) => s + l.valor, 0);
+
+                    const totalFaturas = calcularTotalFaturas();
+
+                    const totalParcelasFaturas = calcularParcelasFaturas();
+                    const saldo = totalReceitas - totalDespesas - totalParcelasFaturas;
+
+                    const el1 = document.getElementById('statTotalReceitas');
+                    const el2 = document.getElementById('statTotalDespesas');
+                    const el3 = document.getElementById('statTotalFaturas');
+                    const el4 = document.getElementById('statSaldo');
+                    const el5 = document.getElementById('statTotalLancamentos');
+
+                    if (el1) el1.textContent = formatarMoeda(totalReceitas);
+                    if (el2) el2.textContent = formatarMoeda(totalDespesas);
+                    if (el3) el3.textContent = formatarMoeda(totalFaturas);
+
+                    if (el4) {
+                        el4.textContent = formatarMoeda(saldo);
+                        el4.className = 'value ' + (saldo >= 0 ? 'positive' : 'negative');
+                    }
+
+                    if (el5) el5.textContent = lancamentos.length;
+
+                    const despesas = lancamentos.filter(l => l.tipo === 'despesa');
+                    const categoriasDespesas = {};
+                    despesas.forEach(l => {
+                        const cat = l.categoria || 'Sem categoria';
+                        categoriasDespesas[cat] = (categoriasDespesas[cat] || 0) + l.valor;
+                    });
+
+                    const tbody = document.getElementById('tabelaResumoCategorias');
+                    const sortedCats = Object.entries(categoriasDespesas).sort((a, b) => b[1] - a[1]);
+                    const totalDesp = Object.values(categoriasDespesas).reduce((a, b) => a + b, 0);
+
+                    if (tbody) {
+                        if (sortedCats.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-light);">Nenhum dado disponível.</td></tr>';
+                        } else {
+                            tbody.innerHTML = sortedCats.map(([cat, valor]) => {
+                                const pct = totalDesp > 0 ? ((valor / totalDesp) * 100).toFixed(1) : 0;
+                                return `<tr>
+                                        <td>${cat}</td>
+                                        <td>${formatarMoeda(valor)}</td>
+                                        <td>${pct}%</td>
+                                    </tr>`;
+                            }).join('');
+                        }
+                    }
+
+                    desenharGraficoReceitasDespesas();
+                    desenharGraficoDespesasCategorias();
+                }
+
+                // ---------- RENDERIZAÇÃO ----------
+                function renderCategorias() {
+                    if (!categoriaTags) return;
+                    categoriaTags.innerHTML = '';
+                    categorias.forEach((cat, idx) => {
+                        const tag = document.createElement('span');
+                        tag.className = 'categoria-tag';
+                        tag.innerHTML = `${cat} <span class="remove-cat" data-idx="${idx}">×</span>`;
+                        categoriaTags.appendChild(tag);
+                    });
+
+                    const selects = [categoriaLanc, filtroCategoria];
+                    selects.forEach(sel => {
+                        if (!sel) return;
+                        const currentVal = sel.value;
+                        sel.innerHTML = '<option value="">Selecione...</option>';
+                        categorias.forEach(cat => {
+                            const opt = document.createElement('option');
+                            opt.value = cat;
+                            opt.textContent = cat;
+                            sel.appendChild(opt);
+                        });
+                        if (currentVal && categorias.includes(currentVal)) {
+                            sel.value = currentVal;
+                        }
+                        if (sel === filtroCategoria) {
+                            const optAll = document.createElement('option');
+                            optAll.value = 'todas';
+                            optAll.textContent = 'Todas categorias';
+                            sel.prepend(optAll);
+                            sel.value = 'todas';
+                        }
+                    });
+
+                    document.querySelectorAll('.remove-cat').forEach(el => {
+                        el.addEventListener('click', function() {
+                            const idx = parseInt(this.dataset.idx);
+                            if (!isNaN(idx) && idx >= 0 && idx < categorias.length) {
+                                const emUso = lancamentos.some(l => l.categoria === categorias[idx]);
+                                if (emUso) {
+                                    alert('Esta categoria está em uso em lançamentos. Remova os lançamentos primeiro ou edite-os.');
+                                    return;
+                                }
+                                categorias.splice(idx, 1);
+                                salvarCategorias();
+                                renderCategorias();
+                            }
+                        });
+                    });
+                }
+
+                function renderInicio() {
+                    const totalReceitas = lancamentos
+                        .filter(l => l.tipo === 'receita')
+                        .reduce((s, l) => s + l.valor, 0);
+
+                    const totalDespesas = lancamentos
+                        .filter(l => l.tipo === 'despesa')
+                        .reduce((s, l) => s + l.valor, 0);
+
+                    const totalParcelasFaturas = calcularParcelasFaturas();
+
+                    const saldo = totalReceitas - totalDespesas - totalParcelasFaturas;
+                    if (saldoEl) {
+                        saldoEl.textContent = formatarMoeda(saldo);
+                        saldoEl.className = 'card-value ' + (saldo >= 0 ? 'positive' : 'negative');
+                    }
+
+                    const totalFaturas = calcularTotalFaturas();
+                    const credito = Math.max(0, limiteCredito - totalFaturas);
+                    if (creditoEl) {
+                        creditoEl.textContent = formatarMoeda(credito);
+                        creditoEl.className = 'card-value ' + (credito > 0 ? 'positive' : credito === 0 ? 'neutral' : 'negative');
+                    }
+
+                    const totalRes = reservas.reduce((s, r) => s + r.valor, 0);
+                    if (totalReservasEl) totalReservasEl.textContent = formatarMoeda(totalRes);
+
+                    const hojeStr = hoje();
+                    const limiteVenc = new Date();
+                    limiteVenc.setDate(limiteVenc.getDate() + 7);
+                    const limiteStr = limiteVenc.toISOString().slice(0, 10);
+
+                    const proximas = lancamentos
+                        .filter(l => l.tipo === 'despesa' && l.parcelas && l.parcelas.length > 0)
+                        .flatMap(l => l.parcelas.map((p, idx) => ({
+                            desc: l.descricao + (l.parcelas.length > 1 ? ` (${idx+1}/${l.parcelas.length})` : ''),
+                            data: p,
+                            valor: l.valor / l.parcelas.length,
+                            moeda: l.moeda || MOEDA_PADRAO
+                        })))
+                        .filter(item => item.data >= hojeStr && item.data <= limiteStr)
+                        .sort((a, b) => a.data.localeCompare(b.data));
+
+                    if (vencerList) {
+                        vencerList.innerHTML = '';
+                        if (proximas.length === 0) {
+                            vencerList.innerHTML = '<div class="empty-message">Nenhuma conta próxima do vencimento.</div>';
+                        } else {
+                            proximas.forEach(item => {
+                                const div = document.createElement('div');
+                                div.className = 'vencer-item';
+                                div.innerHTML = `
+                                        <span class="desc">${item.desc}</span>
+                                        <span class="date">📅 ${dataParaStr(item.data)}</span>
+                                        <span class="value">${formatarMoeda(item.valor, item.moeda)}</span>
+                                    `;
+                                vencerList.appendChild(div);
+                            });
+                        }
+                    }
+                }
+
+                function renderTabela() {
+                    if (!tabelaBody) return;
+                    const tipoFiltro = filtroTipo ? filtroTipo.value : 'todos';
+                    const mesFiltro = filtroMes ? filtroMes.value : '';
+                    const catFiltro = filtroCategoria ? filtroCategoria.value : 'todas';
+                    const moedaFiltro = filtroMoeda ? filtroMoeda.value : 'todas';
+
+                    let filtrados = [...lancamentos];
+
+                    if (tipoFiltro !== 'todos') {
+                        filtrados = filtrados.filter(l => l.tipo === tipoFiltro);
+                    }
+
+                    if (catFiltro !== 'todas' && catFiltro) {
+                        filtrados = filtrados.filter(l => l.categoria === catFiltro);
+                    }
+
+                    if (moedaFiltro !== 'todas' && moedaFiltro) {
+                        filtrados = filtrados.filter(l => (l.moeda || MOEDA_PADRAO) === moedaFiltro);
+                    }
+
+                    if (mesFiltro) {
+                        const [ano, mes] = mesFiltro.split('-').map(Number);
+                        filtrados = filtrados.filter(l => {
+                            const d = new Date(l.data + 'T00:00:00');
+                            return d.getFullYear() === ano && (d.getMonth() + 1) === mes;
+                        });
+                    }
+
+                    filtrados.sort((a, b) => b.data.localeCompare(a.data));
+
+                    tabelaBody.innerHTML = '';
+                    if (filtrados.length === 0) {
+                        tabelaBody.innerHTML =
+                            '<tr><td colspan="8" style="text-align:center; color:var(--text-light);">Nenhum lançamento encontrado.</td></tr>';
+                        return;
+                    }
+
+                    filtrados.forEach((l, idx) => {
+                        const tr = document.createElement('tr');
+                        const totalParcelas = l.parcelas ? l.parcelas.length : 1;
+                        const valorParcela = l.valor / totalParcelas;
+                        const moeda = l.moeda || MOEDA_PADRAO;
+
+                        const tipos = {
+                            'receita': { label: 'Receita', badge: 'badge-receita', class: 'text-success' },
+                            'despesa': { label: 'Despesa', badge: 'badge-despesa', class: 'text-danger' },
+                            'aumento_limite': { label: '📈 Aumento de Limite', badge: 'badge-aumento',
+                                class: 'text-info' },
+                            'fatura': { label: '💳 Fatura', badge: 'badge-fatura', class: 'text-warning' }
+                        };
+
+                        const info = tipos[l.tipo] || tipos['despesa'];
+                        const simbolo = getSimboloMoeda(moeda);
+
+                        tr.innerHTML = `
+                                <td>${dataParaStr(l.data)}</td>
+                                <td>${l.descricao}</td>
+                                <td><span class="badge ${info.badge}">${info.label}</span></td>
+                                <td>${l.categoria || '-'}</td>
+                                <td><span class="currency-badge">${simbolo} ${moeda}</span></td>
+                                <td class="${info.class} fw-bold">${formatarMoeda(l.valor, moeda)}</td>
+                                <td>${totalParcelas}x ${formatarMoeda(valorParcela, moeda)}</td>
+                                <td><button class="btn btn-danger btn-sm" data-idx="${idx}">🗑️</button></td>
+                            `;
+                        tabelaBody.appendChild(tr);
+
+                        tr.querySelector('button').addEventListener('click', function() {
+                            const realIdx = lancamentos.indexOf(l);
+                            if (realIdx !== -1) {
+                                lancamentos.splice(realIdx, 1);
+                                salvarLancamentos();
+                                renderTabela();
+                                renderInicio();
+                                atualizarEstatisticas();
+                            }
+                        });
+                    });
+                }
+
+                function renderReservas() {
+                    if (!reservasGrid) return;
+                    reservasGrid.innerHTML = '';
+                    if (reservas.length === 0) {
+                        reservasGrid.innerHTML =
+                            '<div class="empty-message" style="grid-column:1/-1;">Nenhuma reserva cadastrada.</div>';
+                        return;
+                    }
+
+                    const sorted = [...reservas].sort((a, b) => b.data.localeCompare(a.data));
+
+                    sorted.forEach((r, idx) => {
+                        const div = document.createElement('div');
+                        div.className = 'reserva-card';
+                        const moeda = r.moeda || MOEDA_PADRAO;
+                        const simbolo = getSimboloMoeda(moeda);
+                        div.innerHTML = `
+                                <div class="name">${r.nome}</div>
+                                <div class="value">${formatarMoeda(r.valor, moeda)}</div>
+                                <div class="currency">${simbolo} ${moeda}</div>
+                                <div class="date">📅 ${dataParaStr(r.data)}</div>
+                                <div class="card-actions">
+                                    <button class="btn btn-edit btn-sm btn-editar-reserva" data-idx="${idx}">✏️ Editar</button>
+                                    <button class="btn btn-danger btn-sm btn-excluir-reserva" data-idx="${idx}">🗑️</button>
+                                </div>
+                            `;
+                        reservasGrid.appendChild(div);
+                    });
+
+                    document.querySelectorAll('.btn-editar-reserva').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const idx = parseInt(this.dataset.idx);
+                            abrirModalEdicao(idx);
+                        });
+                    });
+
+                    document.querySelectorAll('.btn-excluir-reserva').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const idx = parseInt(this.dataset.idx);
+                            if (confirm(`Deseja realmente excluir a reserva "${reservas[idx].nome}"?`)) {
+                                reservas.splice(idx, 1);
+                                salvarReservas();
+                                renderReservas();
+                                renderInicio();
+                            }
+                        });
+                    });
+
+                    setTimeout(() => {
+                        desenharGraficoDistribuicaoReservas();
+                    }, 100);
+                }
+
+                function renderTudo() {
+                    renderCategorias();
+                    renderInicio();
+                    renderTabela();
+                    renderReservas();
+                    atualizarEstatisticas();
+                    setTimeout(() => {
+                        desenharGraficoDistribuicaoReservas();
+                    }, 200);
+                }
+
+                // ---------- MODAL ----------
+                function abrirModalEdicao(idx) {
+                    if (idx < 0 || idx >= reservas.length) return;
+                    reservaEditando = idx;
+                    const r = reservas[idx];
+
+                    if (editNomeReserva) editNomeReserva.value = r.nome;
+                    if (editMoedaReserva) editMoedaReserva.value = r.moeda || MOEDA_PADRAO;
+                    if (editValorReserva) editValorReserva.value = r.valor;
+                    if (editDataReserva) editDataReserva.value = r.data;
+                    if (inputSaqueParcial) inputSaqueParcial.value = '';
+
+                    if (modalOverlay) modalOverlay.classList.add('active');
+                }
+
+                function fecharModalEdicao() {
+                    if (modalOverlay) modalOverlay.classList.remove('active');
+                    reservaEditando = null;
+                    if (inputSaqueParcial) inputSaqueParcial.value = '';
+                }
+
+                function salvarEdicaoReserva() {
+                    if (reservaEditando === null) return;
+
+                    const nome = editNomeReserva ? editNomeReserva.value.trim() : '';
+                    const moeda = editMoedaReserva ? editMoedaReserva.value : MOEDA_PADRAO;
+                    const valor = editValorReserva ? parseFloat(editValorReserva.value) : 0;
+                    const data = editDataReserva ? editDataReserva.value : '';
+
+                    if (!nome) { alert('Informe um nome para a reserva.'); return; }
+                    if (isNaN(valor) || valor < 0) { alert('Informe um valor válido (maior ou igual a 0).'); return; }
+                    if (!data) { alert('Informe a data.'); return; }
+
+                    reservas[reservaEditando] = {
+                        ...reservas[reservaEditando],
+                        nome: nome,
+                        moeda: moeda,
+                        valor: valor,
+                        data: data
+                    };
+
+                    salvarReservas();
+                    fecharModalEdicao();
+                    renderReservas();
+                    renderInicio();
+                    atualizarEstatisticas();
+                }
+
+                function aplicarSaqueParcial() {
+                    if (reservaEditando === null) return;
+                    const valorSaque = inputSaqueParcial ? parseFloat(inputSaqueParcial.value) : 0;
+                    const reservaAtual = reservas[reservaEditando];
+                    const moeda = reservaAtual.moeda || MOEDA_PADRAO;
+
+                    if (isNaN(valorSaque) || valorSaque <= 0) {
+                        alert('Informe um valor de saque válido.');
+                        return;
+                    }
+
+                    if (valorSaque > reservaAtual.valor) {
+                        alert(`Saldo insuficiente. Você tem ${formatarMoeda(reservaAtual.valor, moeda)} disponível.`);
+                        return;
+                    }
+
+                    const novoValor = reservaAtual.valor - valorSaque;
+                    if (editValorReserva) editValorReserva.value = novoValor;
+                    if (inputSaqueParcial) inputSaqueParcial.value = '';
+
+                    alert(`✅ Saque de ${formatarMoeda(valorSaque, moeda)} realizado com sucesso!\nNovo saldo: ${formatarMoeda(novoValor, moeda)}`);
+                }
+
+                function aplicarSaqueTotal() {
+                    if (reservaEditando === null) return;
+                    const reservaAtual = reservas[reservaEditando];
+                    const moeda = reservaAtual.moeda || MOEDA_PADRAO;
+
+                    if (!confirm(`Deseja realmente sacar o valor total de ${formatarMoeda(reservaAtual.valor, moeda)} da reserva "${reservaAtual.nome}"?`)) {
+                        return;
+                    }
+
+                    if (editValorReserva) editValorReserva.value = 0;
+                    if (inputSaqueParcial) inputSaqueParcial.value = '';
+
+                    alert(`✅ Saque total de ${formatarMoeda(reservaAtual.valor, moeda)} realizado com sucesso!\nSaldo zerado.`);
+                }
+
+                // ---------- ZERAR DADOS ----------
+                function zerarTodosOsDados() {
+                    const confirmacao = confirm(
+                        '⚠️ ATENÇÃO! Você está prestes a APAGAR TODOS OS DADOS!\n\n' +
+                        'Isso inclui:\n' +
+                        '• Todos os lançamentos (receitas, despesas, faturas, aumentos de limite)\n' +
+                        '• Todas as reservas\n' +
+                        '• Todas as categorias\n' +
+                        '• Limite de crédito\n\n' +
+                        'Esta ação é IRREVERSÍVEL!\n\n' +
+                        'Deseja continuar?'
+                    );
+
+                    if (!confirmacao) return;
+
+                    const confirmacao2 = confirm(
+                        '🔴 ÚLTIMA CHANCE!\n\n' +
+                        'Todos os seus dados serão PERMANENTEMENTE EXCLUÍDOS.\n' +
+                        'Tem certeza que deseja continuar?'
+                    );
+
+                    if (!confirmacao2) return;
+
+                    try {
+                        localStorage.removeItem(STORAGE_LANCAMENTOS);
+                        localStorage.removeItem(STORAGE_RESERVAS);
+                        localStorage.removeItem(STORAGE_CATEGORIAS);
+                        localStorage.removeItem(STORAGE_LIMITE_CREDITO);
+
+                        lancamentos = [];
+                        reservas = [];
+                        categorias = ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'];
+                        limiteCredito = 0;
+
+                        salvarCategorias();
+                        renderTudo();
+
+                        alert('✅ Todos os dados foram zerados com sucesso!');
+
+                    } catch (error) {
+                        console.error('Erro ao zerar dados:', error);
+                        alert('❌ Ocorreu um erro ao tentar zerar os dados. Tente novamente.');
+                    }
+                }
+
+                // ---------- ADICIONAR LANÇAMENTO ----------
+                function adicionarLancamento() {
+                    const tipo = tipoLanc ? tipoLanc.value : 'receita';
+                    const moeda = moedaLanc ? moedaLanc.value : MOEDA_PADRAO;
+                    const categoria = categoriaLanc ? categoriaLanc.value : '';
+                    const desc = descLanc ? descLanc.value.trim() : '';
+                    const valor = valorLanc ? parseFloat(valorLanc.value) : 0;
+                    const data = dataLanc ? dataLanc.value : '';
+                    const parcelas = parcelasLanc ? parseInt(parcelasLanc.value) || 1 : 1;
+
+                    if (!desc) { alert('Informe uma descrição.'); return; }
+                    if (isNaN(valor) || valor <= 0) { alert('Informe um valor válido.'); return; }
+                    if (!data) { alert('Informe a data.'); return; }
+
+                    if (tipo === 'fatura' && parcelas > 1) {
+                        if (!confirm('Faturas geralmente não são parceladas. Deseja continuar com ' + parcelas +
+                                ' parcelas?')) {
+                            return;
+                        }
+                    }
+
+                    const parcelasDatas = [];
+                    const dt = new Date(data + 'T00:00:00');
+                    for (let i = 0; i < parcelas; i++) {
+                        const d = new Date(dt);
+                        d.setMonth(d.getMonth() + i);
+                        parcelasDatas.push(d.toISOString().slice(0, 10));
+                    }
+
+                    lancamentos.push({
+                        id: Date.now() + Math.random(),
+                        tipo: tipo,
+                        moeda: moeda,
+                        categoria: categoria || 'Sem categoria',
+                        descricao: desc,
+                        valor: valor,
+                        data: data,
+                        parcelas: parcelasDatas,
+                        criadoEm: new Date().toISOString()
+                    });
+
+                    if (tipo === 'aumento_limite') {
+                        limiteCredito += valor;
+                        salvarLimiteCredito();
+                    }
+
+                    salvarLancamentos();
+                    renderTudo();
+                }
+
+                // ---------- ADICIONAR RESERVA ----------
+                function adicionarReserva() {
+                    const nome = nomeReserva ? nomeReserva.value.trim() : '';
+                    const moeda = moedaReserva ? moedaReserva.value : MOEDA_PADRAO;
+                    const valor = valorReserva ? parseFloat(valorReserva.value) : 0;
+                    const data = dataReserva ? dataReserva.value : '';
+
+                    if (!nome) { alert('Informe o nome da reserva.'); return; }
+                    if (isNaN(valor) || valor <= 0) { alert('Informe um valor válido.'); return; }
+                    if (!data) { alert('Informe a data.'); return; }
+
+                    reservas.push({
+                        id: Date.now() + Math.random(),
+                        nome: nome,
+                        moeda: moeda,
+                        valor: valor,
+                        data: data,
+                        criadoEm: new Date().toISOString()
+                    });
+
+                    salvarReservas();
+                    renderReservas();
+                    renderInicio();
+                    atualizarEstatisticas();
+                }
+
+                // ---------- ADICIONAR CATEGORIA ----------
+                function adicionarCategoria() {
+                    const nome = novaCategoriaInput ? novaCategoriaInput.value.trim() : '';
+                    if (!nome) { alert('Digite um nome para a categoria.'); return; }
+                    if (categorias.includes(nome)) { alert('Esta categoria já existe.'); return; }
+
+                    categorias.push(nome);
+                    salvarCategorias();
+                    if (novaCategoriaInput) novaCategoriaInput.value = '';
+                    renderCategorias();
+                }
+
+                // ---------- EXPORTAÇÃO/IMPORTAÇÃO ----------
+                function getDadosExportacao() {
+                    const lancData = lancamentos.map(l => ({
+                        'Data': l.data,
+                        'Descrição': l.descricao,
+                        'Tipo': l.tipo,
+                        'Categoria': l.categoria || '',
+                        'Moeda': l.moeda || MOEDA_PADRAO,
+                        'Valor': l.valor,
+                        'Parcelas': l.parcelas ? l.parcelas.join('|') : ''
+                    }));
+
+                    const reservasData = reservas.map(r => ({
+                        'Nome': r.nome,
+                        'Moeda': r.moeda || MOEDA_PADRAO,
+                        'Valor': r.valor,
+                        'Data': r.data
+                    }));
+
+                    const categoriasData = categorias.map(c => ({
+                        'Categoria': c
+                    }));
+
+                    return { lancamentos: lancData, reservas: reservasData, categorias: categoriasData };
+                }
+
+                function exportarCSV() {
+                    const dados = getDadosExportacao();
+                    if (dados.lancamentos.length === 0 && dados.reservas.length === 0) {
+                        alert('Nenhum dado para exportar.');
+                        return;
+                    }
+
+                    let csvContent = '';
+                    csvContent += '=== LANÇAMENTOS ===\n';
+                    const lancHeaders = ['Data', 'Descrição', 'Tipo', 'Categoria', 'Moeda', 'Valor', 'Parcelas'];
+                    csvContent += lancHeaders.join(',') + '\n';
+                    dados.lancamentos.forEach(l => {
+                        csvContent += [
+                            l.Data,
+                            `"${l.Descrição}"`,
+                            l.Tipo,
+                            `"${l.Categoria}"`,
+                            l.Moeda,
+                            l.Valor,
+                            `"${l.Parcelas}"`
+                        ].join(',') + '\n';
+                    });
+
+                    csvContent += '\n=== RESERVAS ===\n';
+                    const resHeaders = ['Nome', 'Moeda', 'Valor', 'Data'];
+                    csvContent += resHeaders.join(',') + '\n';
+                    dados.reservas.forEach(r => {
+                        csvContent += [`"${r.Nome}"`, r.Moeda, r.Valor, r.Data].join(',') + '\n';
+                    });
+
+                    csvContent += '\n=== CATEGORIAS ===\n';
+                    csvContent += 'Categoria\n';
+                    dados.categorias.forEach(c => {
+                        csvContent += `"${c.Categoria}"\n`;
+                    });
+
+                    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `dados_completos_${hoje()}.csv`;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                }
+
+                function exportarExcel() {
+                    const dados = getDadosExportacao();
+                    if (dados.lancamentos.length === 0 && dados.reservas.length === 0) {
+                        alert('Nenhum dado para exportar.');
+                        return;
+                    }
+
+                    try {
+                        const wb = XLSX.utils.book_new();
+                        const wsLanc = XLSX.utils.json_to_sheet(dados.lancamentos);
+                        XLSX.utils.book_append_sheet(wb, wsLanc, 'Lançamentos');
+
+                        const wsRes = XLSX.utils.json_to_sheet(dados.reservas);
+                        XLSX.utils.book_append_sheet(wb, wsRes, 'Reservas');
+
+                        const wsCat = XLSX.utils.json_to_sheet(dados.categorias);
+                        XLSX.utils.book_append_sheet(wb, wsCat, 'Categorias');
+
+                        [wsLanc, wsRes, wsCat].forEach(ws => {
+                            const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+                            const colWidths = {};
+                            for (let R = range.s.r; R <= range.e.r; R++) {
+                                for (let C = range.s.c; C <= range.e.c; C++) {
+                                    const addr = XLSX.utils.encode_cell({ r: R, c: C });
+                                    const cell = ws[addr];
+                                    if (cell && cell.v) {
+                                        const len = String(cell.v).length;
+                                        const col = XLSX.utils.encode_col(C);
+                                        colWidths[col] = Math.max(colWidths[col] || 10, Math.min(len + 4, 50));
+                                    }
+                                }
+                            }
+                            ws['!cols'] = Object.keys(colWidths).map(c => ({ wch: colWidths[c] }));
+                        });
+
+                        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                        const blob = new Blob([wbout], { type: 'application/octet-stream' });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = `dados_completos_${hoje()}.xlsx`;
+                        link.click();
+                        URL.revokeObjectURL(link.href);
+                    } catch (error) {
+                        console.error('Erro ao exportar Excel:', error);
+                        alert('Erro ao exportar Excel. Verifique o console para mais detalhes.');
+                    }
+                }
+
+                function importarDados() {
+                    const file = fileInput ? fileInput.files[0] : null;
+                    if (!file) {
+                        alert('Selecione um arquivo para importar.');
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const content = e.target.result;
+                            let lancamentosImportados = [];
+                            let reservasImportadas = [];
+                            let categoriasImportadas = [];
+                            const fileName = file.name.toLowerCase();
+                            const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+
+                            if (isExcel) {
+                                const data = new Uint8Array(content);
+                                const workbook = XLSX.read(data, { type: 'array' });
+
+                                if (workbook.SheetNames.includes('Lançamentos')) {
+                                    const sheet = workbook.Sheets['Lançamentos'];
+                                    lancamentosImportados = XLSX.utils.sheet_to_json(sheet);
+                                }
+                                if (workbook.SheetNames.includes('Reservas')) {
+                                    const sheet = workbook.Sheets['Reservas'];
+                                    reservasImportadas = XLSX.utils.sheet_to_json(sheet);
+                                }
+                                if (workbook.SheetNames.includes('Categorias')) {
+                                    const sheet = workbook.Sheets['Categorias'];
+                                    categoriasImportadas = XLSX.utils.sheet_to_json(sheet).map(row => row.Categoria || row
+                                        .categoria || '').filter(Boolean);
+                                }
+                            } else {
+                                const lines = content.split('\n').filter(line => line.trim());
+                                let currentSection = '';
+                                let headers = [];
+
+                                for (let i = 0; i < lines.length; i++) {
+                                    const line = lines[i].trim();
+                                    if (line.startsWith('=== ')) {
+                                        currentSection = line.replace(/===/g, '').trim();
+                                        continue;
+                                    }
+                                    if (!line) continue;
+
+                                    const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+
+                                    if (values.every(v => v && !isNaN(v) === false) && i < lines.length - 1) {
+                                        headers = values;
+                                        continue;
+                                    }
+
+                                    if (currentSection === 'LANÇAMENTOS' && headers.length > 0 && values.length >= headers
+                                        .length) {
+                                        const obj = {};
+                                        headers.forEach((h, idx) => { obj[h] = values[idx] || ''; });
+                                        if (obj.Parcelas && typeof obj.Parcelas === 'string' && obj.Parcelas.includes('|')) {
+                                            obj.Parcelas = obj.Parcelas.split('|');
+                                        } else if (obj.Parcelas) {
+                                            obj.Parcelas = [obj.Parcelas];
+                                        }
+                                        if (obj.Valor) obj.Valor = parseFloat(obj.Valor) || 0;
+                                        lancamentosImportados.push(obj);
+                                    }
+
+                                    if (currentSection === 'RESERVAS' && headers.length > 0 && values.length >= headers
+                                        .length) {
+                                        const obj = {};
+                                        headers.forEach((h, idx) => { obj[h] = values[idx] || ''; });
+                                        if (obj.Valor) obj.Valor = parseFloat(obj.Valor) || 0;
+                                        reservasImportadas.push(obj);
+                                    }
+
+                                    if (currentSection === 'CATEGORIAS' && values.length > 0) {
+                                        const cat = values[0] || values[1] || '';
+                                        if (cat) categoriasImportadas.push(cat);
+                                    }
+
+                                    if (values.some(v => v && !isNaN(v))) {
+                                        headers = [];
+                                    }
+                                }
+                            }
+
+                            let importados = 0;
+                            let reservasImp = 0;
+                            let categoriasImp = 0;
+
+                            if (lancamentosImportados.length > 0) {
+                                lancamentosImportados.forEach(l => {
+                                    if (l.Data && l.Descrição && l.Valor) {
+                                        const parcelas = l.Parcelas && Array.isArray(l.Parcelas) ?
+                                            l.Parcelas :
+                                            l.Parcelas ? [l.Parcelas] :
+                                            [l.Data];
+                                        lancamentos.push({
+                                            id: Date.now() + Math.random(),
+                                            tipo: l.Tipo || 'despesa',
+                                            moeda: l.Moeda || MOEDA_PADRAO,
+                                            categoria: l.Categoria || 'Sem categoria',
+                                            descricao: l.Descrição,
+                                            valor: l.Valor,
+                                            data: l.Data,
+                                            parcelas: parcelas,
+                                            criadoEm: new Date().toISOString()
+                                        });
+                                        importados++;
+                                    }
+                                });
+                                salvarLancamentos();
+                            }
+
+                            if (reservasImportadas.length > 0) {
+                                reservasImportadas.forEach(r => {
+                                    if (r.Nome && r.Valor && r.Data) {
+                                        reservas.push({
+                                            id: Date.now() + Math.random(),
+                                            nome: r.Nome,
+                                            moeda: r.Moeda || MOEDA_PADRAO,
+                                            valor: r.Valor,
+                                            data: r.Data,
+                                            criadoEm: new Date().toISOString()
+                                        });
+                                        reservasImp++;
+                                    }
+                                });
+                                salvarReservas();
+                            }
+
+                            if (categoriasImportadas.length > 0) {
+                                if (confirm(
+                                        `Deseja substituir as categorias existentes (${categorias.length}) pelas importadas (${categoriasImportadas.length})?` +
+                                        '\n\n"OK" = Substituir\n"Cancelar" = Mesclar')) {
+                                    categorias = categoriasImportadas.filter(Boolean);
+                                } else {
+                                    categoriasImportadas.forEach(c => {
+                                        if (c && !categorias.includes(c)) categorias.push(c);
+                                    });
+                                }
+                                salvarCategorias();
+                                categoriasImp = categoriasImportadas.length;
+                            }
+
+                            if (fileInput) fileInput.value = '';
+                            renderTudo();
+
+                            let msg = '✅ Importação concluída!\n\n';
+                            if (importados > 0) msg += `📄 Lançamentos: ${importados} importados\n`;
+                            if (reservasImp > 0) msg += `🏦 Reservas: ${reservasImp} importadas\n`;
+                            if (categoriasImp > 0) msg += `🏷️ Categorias: ${categoriasImp} processadas\n`;
+                            if (importados === 0 && reservasImp === 0) {
+                                msg = '⚠️ Nenhum dado foi importado. Verifique o formato do arquivo.';
+                            }
+                            alert(msg);
+
+                        } catch (error) {
+                            console.error('Erro ao importar:', error);
+                            alert('Erro ao importar arquivo. Verifique o formato e tente novamente.');
+                        }
+                    };
+
+                    if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
+                        reader.readAsArrayBuffer(file);
+                    } else {
+                        reader.readAsText(file, 'UTF-8');
+                    }
+                }
+
+                // ---------- DARK MODE ----------
+                function toggleDarkMode() {
+                    if (!document.body) return;
+                    document.body.classList.toggle('dark-mode');
+                    const isDark = document.body.classList.contains('dark-mode');
+                    if (btnDarkMode) btnDarkMode.textContent = isDark ? '☀️' : '🌙';
+                    localStorage.setItem(STORAGE_DARKMODE, isDark);
+                    setTimeout(() => {
+                        desenharGraficoDistribuicaoReservas();
+                        desenharGraficoReceitasDespesas();
+                        desenharGraficoDespesasCategorias();
+                    }, 100);
+                }
+
+                // ---------- TABS ----------
+                function initTabs() {
+                    const btns = document.querySelectorAll('.tab-btn');
+                    const contents = document.querySelectorAll('.tab-content');
+
+                    btns.forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            btns.forEach(b => b.classList.remove('active'));
+                            contents.forEach(c => c.classList.remove('active'));
+                            this.classList.add('active');
+                            document.getElementById(this.dataset.tab).classList.add('active');
+
+                            if (this.dataset.tab === 'tab3') {
+                                setTimeout(() => {
+                                    desenharGraficoDistribuicaoReservas();
+                                }, 100);
+                            }
+                            if (this.dataset.tab === 'tab4') {
+                                setTimeout(() => {
+                                    desenharGraficoReceitasDespesas();
+                                    desenharGraficoDespesasCategorias();
+                                }, 100);
+                            }
+                        });
+                    });
+                }
+
+                // ---------- INICIALIZAR SISTEMA ----------
+                function inicializarSistema(user) {
+                    currentUser = user;
+                    carregarDados();
+                    initTabs();
+
+                    const headerDate = document.getElementById('headerDate');
+                    if (headerDate) {
+                        headerDate.textContent =
+                            new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long',
+                                year: 'numeric' });
+                    }
+
+                    renderTudo();
+
+                    let resizeTimer;
+                    window.addEventListener('resize', function() {
+                        clearTimeout(resizeTimer);
+                        resizeTimer = setTimeout(() => {
+                            desenharGraficoDistribuicaoReservas();
+                            desenharGraficoReceitasDespesas();
+                            desenharGraficoDespesasCategorias();
+                        }, 200);
+                    });
+                }
+
+                window.inicializarSistema = inicializarSistema;
+
+                // ---------- EVENTOS ----------
+                if (btnAdd) btnAdd.addEventListener('click', adicionarLancamento);
+                if (btnAddReserva) btnAddReserva.addEventListener('click', adicionarReserva);
+                if (btnAddCategoria) btnAddCategoria.addEventListener('click', adicionarCategoria);
+                if (btnExportarCSV) btnExportarCSV.addEventListener('click', exportarCSV);
+                if (btnExportarExcel) btnExportarExcel.addEventListener('click', exportarExcel);
+                if (btnImportarArquivo) btnImportarArquivo.addEventListener('click', importarDados);
+                if (btnDarkMode) btnDarkMode.addEventListener('click', toggleDarkMode);
+                if (btnZerarDados) btnZerarDados.addEventListener('click', zerarTodosOsDados);
+
+                // Modal
+                if (btnSalvarEdicao) btnSalvarEdicao.addEventListener('click', salvarEdicaoReserva);
+                if (btnCancelarEdicao) btnCancelarEdicao.addEventListener('click', fecharModalEdicao);
+                if (btnSaqueParcial) btnSaqueParcial.addEventListener('click', aplicarSaqueParcial);
+                if (btnSaqueTotal) btnSaqueTotal.addEventListener('click', aplicarSaqueTotal);
+
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') fecharModalEdicao();
+                });
+
+                if (modalOverlay) {
+                    modalOverlay.addEventListener('click', function(e) {
+                        if (e.target === modalOverlay) fecharModalEdicao();
+                    });
+                }
+
+                if (inputSaqueParcial) {
+                    inputSaqueParcial.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') aplicarSaqueParcial();
+                    });
+                }
+
+                if (novaCategoriaInput) {
+                    novaCategoriaInput.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') adicionarCategoria();
+                    });
+                }
+
+                if (valorReserva) {
+                    valorReserva.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') adicionarReserva();
+                    });
+                }
+
+                if (valorLanc) {
+                    valorLanc.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') adicionarLancamento();
+                    });
+                }
+
+                if (filtroTipo) filtroTipo.addEventListener('change', renderTabela);
+                if (filtroMes) filtroMes.addEventListener('change', renderTabela);
+                if (filtroCategoria) filtroCategoria.addEventListener('change', renderTabela);
+                if (filtroMoeda) filtroMoeda.addEventListener('change', renderTabela);
+
+                const btnLimparFiltros = document.getElementById('btnLimparFiltros');
+                if (btnLimparFiltros) {
+                    btnLimparFiltros.addEventListener('click', function() {
+                        if (filtroTipo) filtroTipo.value = 'todos';
+                        if (filtroMes) filtroMes.value = '';
+                        if (filtroCategoria) filtroCategoria.value = 'todas';
+                        if (filtroMoeda) filtroMoeda.value = 'todas';
+                        renderTabela();
+                    });
+                }
+
+                // Se já estiver logado, inicializar
+                if (document.getElementById('appContainer') && document.getElementById('appContainer').classList.contains(
+                        'active')) {
+                    const session = JSON.parse(localStorage.getItem('imperio_session') || '{}');
+                    if (session.username) {
+                        inicializarSistema(session.username);
+                    }
+                }
+            }
+
+        })();
+    </script>
+
+</body>
+</html>

@@ -5,14 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Império - Controle Financeiro</title>
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js">
-    </script>
-    
     <!-- SheetJS para manipular Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
     </script>
@@ -255,31 +247,6 @@
             margin-left: 14px;
         }
 
-        .auth-container .loading {
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 14px;
-            padding: 10px;
-        }
-
-        .auth-container .loading .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--border-color);
-            border-top-color: var(--primary-color);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
         .auth-container .demo-info {
             text-align: center;
             font-size: 13px;
@@ -456,19 +423,6 @@
         }
         .sync-status .dot.offline {
             background: var(--danger-color);
-        }
-        .sync-status .dot.syncing {
-            background: #f39c12;
-            animation: pulse 0.5s infinite alternate;
-        }
-
-        @keyframes pulse {
-            from {
-                opacity: 0.3;
-            }
-            to {
-                opacity: 1;
-            }
         }
 
         /* ============================
@@ -953,7 +907,6 @@
             letter-spacing: 0.3px;
         }
 
-        /* Estilos para gráfico na aba Reservas */
         .reserva-chart-container {
             max-width: 500px;
             margin: 0 auto;
@@ -1371,7 +1324,7 @@
     ============================ -->
     <div class="auth-container" id="authContainer">
         <div class="logo">👑 <span>Império</span></div>
-        <div class="subtitle">Controle Financeiro na Nuvem</div>
+        <div class="subtitle">Controle Financeiro</div>
 
         <div class="error-message" id="authError"></div>
         <div class="success-message" id="authSuccess"></div>
@@ -1421,10 +1374,6 @@
                 Já tem uma conta? <a href="#" id="showLogin">Fazer login</a>
             </div>
         </div>
-
-        <div class="loading" id="loadingAuth" style="display:none;">
-            <span class="spinner"></span> Carregando...
-        </div>
     </div>
 
     <!-- ============================
@@ -1442,7 +1391,7 @@
                 </div>
                 <div class="sync-status">
                     <span class="dot online" id="syncDot"></span>
-                    <span id="syncText">Sincronizado</span>
+                    <span id="syncText">Local</span>
                 </div>
             </div>
             <div class="header-actions">
@@ -1771,28 +1720,14 @@
 
     <script>
         // ============================================================
-        //  CONFIGURAÇÃO DO FIREBASE
-        // ============================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyB6eWS-N2hacE2Uyn5gCwf6m1P169T_y_4",
-            authDomain: "controle-financeiro-60807.firebaseapp.com",
-            projectId: "controle-financeiro-60807",
-            storageBucket: "controle-financeiro-60807.firebasestorage.app",
-            messagingSenderId: "1002617004174",
-            appId: "1:1002617004174:web:d3c55c61dd5ca19b2d29df"
-        };
-
-        // Inicializar Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        // ============================================================
-        //  SISTEMA DE AUTENTICAÇÃO CORRIGIDO
+        //  SISTEMA DE AUTENTICAÇÃO (LOCAL)
         // ============================================================
 
         (function() {
             'use strict';
+
+            const STORAGE_USERS = 'imperio_users';
+            const STORAGE_SESSION = 'imperio_session';
 
             // Elementos de autenticação
             const authContainer = document.getElementById('authContainer');
@@ -1817,17 +1752,40 @@
             const btnLogout = document.getElementById('btnLogout');
             const userAvatar = document.getElementById('userAvatar');
             const userNameDisplay = document.getElementById('userNameDisplay');
-            const syncDot = document.getElementById('syncDot');
-            const syncText = document.getElementById('syncText');
 
-            const loadingAuth = document.getElementById('loadingAuth');
+            // ---------- FUNÇÕES ----------
+            function getUsers() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_USERS);
+                    return raw ? JSON.parse(raw) : {};
+                } catch (e) { return {}; }
+            }
 
-            // ---------- FUNÇÕES DE AUTENTICAÇÃO ----------
+            function saveUsers(users) {
+                localStorage.setItem(STORAGE_USERS, JSON.stringify(users));
+            }
+
+            function getSession() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_SESSION);
+                    return raw ? JSON.parse(raw) : null;
+                } catch (e) { return null; }
+            }
+
+            function saveSession(username) {
+                localStorage.setItem(STORAGE_SESSION, JSON.stringify({ username: username, loginTime: new Date()
+                        .toISOString() }));
+            }
+
+            function clearSession() {
+                localStorage.removeItem(STORAGE_SESSION);
+            }
+
             function showError(msg) {
                 authError.textContent = msg;
                 authError.classList.add('show');
                 authSuccess.classList.remove('show');
-                setTimeout(() => authError.classList.remove('show'), 5000);
+                setTimeout(() => authError.classList.remove('show'), 4000);
             }
 
             function showSuccess(msg) {
@@ -1837,44 +1795,8 @@
                 setTimeout(() => authSuccess.classList.remove('show'), 3000);
             }
 
-            function setLoading(loading) {
-                loadingAuth.style.display = loading ? 'block' : 'none';
-                btnLogin.disabled = loading;
-                btnRegister.disabled = loading;
-            }
-
-            // ---------- FUNÇÃO PARA CRIAR USUÁRIO DEMO ----------
-            async function criarUsuarioDemo() {
-                const email = 'demo@imperio.finance';
-                const password = 'demo123';
-                const username = 'demo';
-
-                try {
-                    // Verificar se o usuário já existe
-                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                    // Criar perfil no Firestore
-                    await db.collection('users').doc(userCredential.user.uid).set({
-                        username: username,
-                        displayName: 'demo',
-                        email: email,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lancamentos: [],
-                        reservas: [],
-                        categorias: ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'],
-                        limiteCredito: 0
-                    });
-                    console.log('✅ Usuário demo criado com sucesso!');
-                } catch (error) {
-                    if (error.code === 'auth/email-already-in-use') {
-                        console.log('ℹ️ Usuário demo já existe.');
-                    } else {
-                        console.error('❌ Erro ao criar usuário demo:', error);
-                    }
-                }
-            }
-
             // ---------- LOGIN ----------
-            async function doLogin() {
+            function doLogin() {
                 const username = loginUsername.value.trim();
                 const password = loginPassword.value.trim();
 
@@ -1883,38 +1805,27 @@
                     return;
                 }
 
-                setLoading(true);
+                const users = getUsers();
 
-                try {
-                    // Tentar login com o e-mail formatado
-                    const email = username.toLowerCase() + '@imperio.finance';
-                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                    
-                    // Atualizar nome de usuário no Firestore
-                    await db.collection('users').doc(userCredential.user.uid).update({
-                        username: username,
-                        displayName: username
-                    }).catch(() => {});
-
-                    showSuccess('Login realizado com sucesso!');
-                    setTimeout(() => {
-                        entrarNoSistema(auth.currentUser);
-                    }, 500);
-
-                } catch (error) {
-                    setLoading(false);
-                    let msg = 'Erro ao fazer login.';
-                    if (error.code === 'auth/user-not-found') msg = 'Usuário não encontrado.';
-                    else if (error.code === 'auth/wrong-password') msg = 'Senha incorreta.';
-                    else if (error.code === 'auth/invalid-email') msg = 'Usuário inválido.';
-                    else if (error.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Tente novamente mais tarde.';
-                    showError(msg);
-                    console.error(error);
+                if (!users[username]) {
+                    showError('Usuário não encontrado.');
+                    return;
                 }
+
+                if (users[username] !== password) {
+                    showError('Senha incorreta.');
+                    return;
+                }
+
+                saveSession(username);
+                showSuccess('Login realizado com sucesso!');
+                setTimeout(() => {
+                    entrarNoSistema(username);
+                }, 500);
             }
 
             // ---------- REGISTRO ----------
-            async function doRegister() {
+            function doRegister() {
                 const username = registerUsername.value.trim();
                 const password = registerPassword.value.trim();
                 const confirm = registerConfirmPassword.value.trim();
@@ -1939,91 +1850,48 @@
                     return;
                 }
 
-                setLoading(true);
+                const users = getUsers();
 
-                try {
-                    const email = username.toLowerCase() + '@imperio.finance';
-                    
-                    // Criar usuário no Firebase Auth
-                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                    
-                    // Criar perfil no Firestore
-                    await db.collection('users').doc(userCredential.user.uid).set({
-                        username: username,
-                        displayName: username,
-                        email: email,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lancamentos: [],
-                        reservas: [],
-                        categorias: ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'],
-                        limiteCredito: 0
-                    });
-
-                    setLoading(false);
-                    showSuccess('✅ Conta criada com sucesso! Faça login.');
-                    
-                    // Fazer logout para o usuário fazer login manualmente
-                    await auth.signOut();
-                    
-                    setTimeout(() => {
-                        toggleForms('login');
-                        loginUsername.value = username;
-                        loginPassword.value = '';
-                    }, 500);
-
-                } catch (error) {
-                    setLoading(false);
-                    let msg = 'Erro ao criar conta.';
-                    if (error.code === 'auth/email-already-in-use') msg = 'Usuário já cadastrado.';
-                    else if (error.code === 'auth/invalid-email') msg = 'Usuário inválido.';
-                    else if (error.code === 'auth/weak-password') msg = 'Senha muito fraca. Use pelo menos 4 caracteres.';
-                    showError(msg);
-                    console.error(error);
+                if (users[username]) {
+                    showError('Usuário já existe. Escolha outro nome.');
+                    return;
                 }
+
+                users[username] = password;
+                saveUsers(users);
+
+                showSuccess('✅ Conta criada com sucesso! Faça login.');
+                setTimeout(() => {
+                    toggleForms('login');
+                    loginUsername.value = username;
+                    loginPassword.value = '';
+                }, 500);
             }
 
-            // ---------- ENTRAR/SAIR DO SISTEMA ----------
-            function entrarNoSistema(user) {
+            // ---------- ENTRAR/SAIR ----------
+            function entrarNoSistema(username) {
                 authContainer.style.display = 'none';
                 appContainer.classList.add('active');
 
-                // Buscar nome de usuário do Firestore
-                db.collection('users').doc(user.uid).get().then((doc) => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        const name = data.displayName || data.username || user.email || 'Usuário';
-                        const initial = name.charAt(0).toUpperCase();
-                        userAvatar.textContent = initial;
-                        userNameDisplay.textContent = name;
-                    } else {
-                        const name = user.email || 'Usuário';
-                        const initial = name.charAt(0).toUpperCase();
-                        userAvatar.textContent = initial;
-                        userNameDisplay.textContent = name;
-                    }
-                });
-
-                syncDot.className = 'dot online';
-                syncText.textContent = 'Sincronizado';
+                const initial = username.charAt(0).toUpperCase();
+                userAvatar.textContent = initial;
+                userNameDisplay.textContent = username;
 
                 if (typeof inicializarSistema === 'function') {
-                    inicializarSistema(user);
+                    inicializarSistema(username);
                 }
             }
 
             function sairDoSistema() {
-                auth.signOut().then(() => {
-                    authContainer.style.display = 'block';
-                    appContainer.classList.remove('active');
-                    loginPassword.value = '';
-                    registerUsername.value = '';
-                    registerPassword.value = '';
-                    registerConfirmPassword.value = '';
-                    authError.classList.remove('show');
-                    authSuccess.classList.remove('show');
-                    syncDot.className = 'dot offline';
-                    syncText.textContent = 'Offline';
-                });
+                clearSession();
+                authContainer.style.display = 'block';
+                appContainer.classList.remove('active');
+                loginPassword.value = '';
+                registerUsername.value = '';
+                registerPassword.value = '';
+                registerConfirmPassword.value = '';
+                authError.classList.remove('show');
+                authSuccess.classList.remove('show');
             }
 
             // ---------- ALTERNAR FORMULÁRIOS ----------
@@ -2038,6 +1906,31 @@
                     registerForm.style.display = 'block';
                     authError.classList.remove('show');
                     authSuccess.classList.remove('show');
+                }
+            }
+
+            // ---------- VERIFICAR SESSÃO ----------
+            function verificarSessao() {
+                const session = getSession();
+                if (session && session.username) {
+                    const users = getUsers();
+                    if (users[session.username]) {
+                        entrarNoSistema(session.username);
+                        return true;
+                    } else {
+                        clearSession();
+                    }
+                }
+                return false;
+            }
+
+            // ---------- CRIAR USUÁRIO DEMO ----------
+            function criarUsuarioDemo() {
+                const users = getUsers();
+                if (!users['demo']) {
+                    users['demo'] = 'demo123';
+                    saveUsers(users);
+                    console.log('✅ Usuário demo criado: demo / demo123');
                 }
             }
 
@@ -2072,30 +1965,37 @@
             });
 
             // ---------- INICIALIZAÇÃO ----------
-            // Criar usuário demo automaticamente
-            setTimeout(criarUsuarioDemo, 1000);
+            criarUsuarioDemo();
 
-            // Verificar sessão ao carregar
-            auth.onAuthStateChanged(function(user) {
-                if (user) {
-                    entrarNoSistema(user);
-                } else {
-                    authContainer.style.display = 'block';
-                    appContainer.classList.remove('active');
-                    syncDot.className = 'dot offline';
-                    syncText.textContent = 'Offline';
-                }
-            });
+            if (!verificarSessao()) {
+                authContainer.style.display = 'block';
+                appContainer.classList.remove('active');
+            }
+
+            // Expor funções para debug
+            window._auth = {
+                getUsers: getUsers,
+                saveUsers: saveUsers,
+                getSession: getSession,
+                clearSession: clearSession
+            };
 
         })();
 
 
         // ============================================================
-        //  SISTEMA FINANCEIRO COM FIREBASE
+        //  SISTEMA FINANCEIRO (APÓS LOGIN)
         // ============================================================
 
         (function() {
             'use strict';
+
+            // ---------- CHAVES DO localStorage ----------
+            const STORAGE_LANCAMENTOS = 'imperio_lancamentos';
+            const STORAGE_RESERVAS = 'imperio_reservas';
+            const STORAGE_CATEGORIAS = 'imperio_categorias';
+            const STORAGE_DARKMODE = 'imperio_darkmode';
+            const STORAGE_LIMITE_CREDITO = 'imperio_limite_credito';
 
             // ---------- ELEMENTOS DOM ----------
             const saldoEl = document.getElementById('saldoDisponivel');
@@ -2105,7 +2005,6 @@
             const tabelaBody = document.getElementById('tabelaLancamentos');
             const reservasGrid = document.getElementById('reservasGrid');
 
-            // Formulário lançamentos
             const tipoLanc = document.getElementById('tipoLancamento');
             const moedaLanc = document.getElementById('moedaLancamento');
             const categoriaLanc = document.getElementById('categoriaLancamento');
@@ -2115,31 +2014,26 @@
             const parcelasLanc = document.getElementById('parcelasLancamento');
             const btnAdd = document.getElementById('btnAddLancamento');
 
-            // Filtros
             const filtroTipo = document.getElementById('filtroTipo');
             const filtroMes = document.getElementById('filtroMes');
             const filtroCategoria = document.getElementById('filtroCategoria');
             const filtroMoeda = document.getElementById('filtroMoeda');
 
-            // Categorias
             const novaCategoriaInput = document.getElementById('novaCategoria');
             const btnAddCategoria = document.getElementById('btnAddCategoria');
             const categoriaTags = document.getElementById('categoriaTags');
 
-            // Reservas
             const nomeReserva = document.getElementById('nomeReserva');
             const moedaReserva = document.getElementById('moedaReserva');
             const valorReserva = document.getElementById('valorReserva');
             const dataReserva = document.getElementById('dataReserva');
             const btnAddReserva = document.getElementById('btnAddReserva');
 
-            // Import/Export
             const btnExportarCSV = document.getElementById('btnExportarCSV');
             const btnExportarExcel = document.getElementById('btnExportarExcel');
             const fileInput = document.getElementById('fileInput');
             const btnImportarArquivo = document.getElementById('btnImportarArquivo');
 
-            // Gráficos
             const canvasDistribuicao = document.getElementById('graficoDistribuicaoReservas');
             let ctxDistribuicao = canvasDistribuicao.getContext('2d');
             let chartDistribuicao = null;
@@ -2152,7 +2046,6 @@
             let ctxDespesasCategorias = canvasDespesasCategorias.getContext('2d');
             let chartDespesasCategorias = null;
 
-            // Dark Mode / Zerar
             const btnDarkMode = document.getElementById('btnDarkMode');
             const btnZerarDados = document.getElementById('btnZerarDados');
 
@@ -2186,106 +2079,66 @@
 
             const MOEDA_PADRAO = 'BRL';
 
-            // ---------- FUNÇÕES DE CARGA/SALVO FIREBASE ----------
-            async function carregarDadosFirebase(user) {
-                if (!user) return;
+            // ---------- FUNÇÕES DE CARGA / SALVO ----------
+            function carregarDados() {
+                try {
+                    const rawL = localStorage.getItem(STORAGE_LANCAMENTOS);
+                    lancamentos = rawL ? JSON.parse(rawL) : [];
+                } catch (e) { lancamentos = []; }
 
                 try {
-                    const doc = await db.collection('users').doc(user.uid).get();
+                    const rawR = localStorage.getItem(STORAGE_RESERVAS);
+                    reservas = rawR ? JSON.parse(rawR) : [];
+                } catch (e) { reservas = []; }
 
-                    if (doc.exists) {
-                        const data = doc.data();
-                        lancamentos = data.lancamentos || [];
-                        reservas = data.reservas || [];
-                        categorias = data.categorias || ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer',
-                            'Saúde', 'Educação'
-                        ];
-                        limiteCredito = data.limiteCredito || 0;
+                try {
+                    const rawC = localStorage.getItem(STORAGE_CATEGORIAS);
+                    categorias = rawC ? JSON.parse(rawC) : ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer',
+                        'Saúde', 'Educação'
+                    ];
+                } catch (e) {
+                    categorias = ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'];
+                }
 
-                        // Garantir que lançamentos antigos tenham moeda
-                        lancamentos = lancamentos.map(l => {
-                            if (!l.moeda) l.moeda = MOEDA_PADRAO;
-                            return l;
-                        });
+                try {
+                    const rawLc = localStorage.getItem(STORAGE_LIMITE_CREDITO);
+                    limiteCredito = rawLc ? parseFloat(rawLc) : 0;
+                } catch (e) { limiteCredito = 0; }
 
-                        // Garantir que reservas antigas tenham moeda
-                        reservas = reservas.map(r => {
-                            if (!r.moeda) r.moeda = MOEDA_PADRAO;
-                            return r;
-                        });
-                    } else {
-                        // Criar perfil se não existir
-                        await db.collection('users').doc(user.uid).set({
-                            username: user.displayName || user.email || 'Usuário',
-                            displayName: user.displayName || user.email || 'Usuário',
-                            email: user.email,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            lancamentos: [],
-                            reservas: [],
-                            categorias: ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde',
-                                'Educação'
-                            ],
-                            limiteCredito: 0
-                        });
-                        lancamentos = [];
-                        reservas = [];
-                        categorias = ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'];
-                        limiteCredito = 0;
+                try {
+                    const dark = localStorage.getItem(STORAGE_DARKMODE);
+                    if (dark === 'true') {
+                        document.body.classList.add('dark-mode');
+                        btnDarkMode.textContent = '☀️';
                     }
+                } catch (e) {}
 
-                    // Carregar preferências
-                    try {
-                        const dark = localStorage.getItem('imperio_darkmode');
-                        if (dark === 'true') {
-                            document.body.classList.add('dark-mode');
-                            btnDarkMode.textContent = '☀️';
-                        }
-                    } catch (e) {}
+                // Garantir que lançamentos antigos tenham moeda
+                lancamentos = lancamentos.map(l => {
+                    if (!l.moeda) l.moeda = MOEDA_PADRAO;
+                    return l;
+                });
 
-                    renderTudo();
-                    atualizarStatusSync(true);
-
-                } catch (error) {
-                    console.error('Erro ao carregar dados do Firebase:', error);
-                    atualizarStatusSync(false);
-                }
+                reservas = reservas.map(r => {
+                    if (!r.moeda) r.moeda = MOEDA_PADRAO;
+                    return r;
+                });
             }
 
-            async function salvarDadosFirebase() {
-                if (!currentUser) return;
-
-                try {
-                    atualizarStatusSync('syncing');
-
-                    await db.collection('users').doc(currentUser.uid).update({
-                        lancamentos: lancamentos,
-                        reservas: reservas,
-                        categorias: categorias,
-                        limiteCredito: limiteCredito,
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    atualizarStatusSync(true);
-                } catch (error) {
-                    console.error('Erro ao salvar dados no Firebase:', error);
-                    atualizarStatusSync(false);
-                }
+            function salvarLancamentos() {
+                localStorage.setItem(STORAGE_LANCAMENTOS, JSON.stringify(lancamentos));
             }
 
-            function atualizarStatusSync(status) {
-                const dot = document.getElementById('syncDot');
-                const text = document.getElementById('syncText');
+            function salvarReservas() {
+                localStorage.setItem(STORAGE_RESERVAS, JSON.stringify(reservas));
+            }
 
-                if (status === true) {
-                    dot.className = 'dot online';
-                    text.textContent = 'Sincronizado';
-                } else if (status === false) {
-                    dot.className = 'dot offline';
-                    text.textContent = 'Offline';
-                } else if (status === 'syncing') {
-                    dot.className = 'dot syncing';
-                    text.textContent = 'Sincronizando...';
-                }
+            function salvarCategorias() {
+                localStorage.setItem(STORAGE_CATEGORIAS, JSON.stringify(categorias));
+            }
+
+            function salvarLimiteCredito() {
+                localStorage.setItem(STORAGE_LIMITE_CREDITO, JSON.stringify(limiteCredito));
             }
 
             // ---------- HELPERS ----------
@@ -2328,7 +2181,7 @@
                     .reduce((s, l) => s + l.valor, 0);
             }
 
-            // ---------- GRÁFICO DE PIZZA - DISTRIBUIÇÃO DAS RESERVAS ----------
+            // ---------- GRÁFICOS ----------
             function desenharGraficoDistribuicaoReservas() {
                 if (chartDistribuicao) {
                     chartDistribuicao.destroy();
@@ -2388,7 +2241,6 @@
                 });
             }
 
-            // ---------- GRÁFICO DE PIZZA - RECEITAS VS DESPESAS ----------
             function desenharGraficoReceitasDespesas() {
                 if (chartReceitasDespesas) {
                     chartReceitasDespesas.destroy();
@@ -2445,7 +2297,6 @@
                 });
             }
 
-            // ---------- GRÁFICO DE PIZZA - DESPESAS POR CATEGORIA ----------
             function desenharGraficoDespesasCategorias() {
                 if (chartDespesasCategorias) {
                     chartDespesasCategorias.destroy();
@@ -2564,7 +2415,7 @@
                 desenharGraficoDespesasCategorias();
             }
 
-            // ---------- RENDER: CATEGORIAS ----------
+            // ---------- RENDERIZAÇÃO ----------
             function renderCategorias() {
                 categoriaTags.innerHTML = '';
                 categorias.forEach((cat, idx) => {
@@ -2606,14 +2457,13 @@
                                 return;
                             }
                             categorias.splice(idx, 1);
-                            salvarDadosFirebase();
+                            salvarCategorias();
                             renderCategorias();
                         }
                     });
                 });
             }
 
-            // ---------- RENDER: INÍCIO ----------
             function renderInicio() {
                 const totalReceitas = lancamentos
                     .filter(l => l.tipo === 'receita')
@@ -2670,7 +2520,6 @@
                 }
             }
 
-            // ---------- RENDER: TABELA LANÇAMENTOS ----------
             function renderTabela() {
                 const tipoFiltro = filtroTipo.value;
                 const mesFiltro = filtroMes.value;
@@ -2741,7 +2590,7 @@
                         const realIdx = lancamentos.indexOf(l);
                         if (realIdx !== -1) {
                             lancamentos.splice(realIdx, 1);
-                            salvarDadosFirebase();
+                            salvarLancamentos();
                             renderTabela();
                             renderInicio();
                             atualizarEstatisticas();
@@ -2750,7 +2599,6 @@
                 });
             }
 
-            // ---------- RENDER: RESERVAS ----------
             function renderReservas() {
                 reservasGrid.innerHTML = '';
                 if (reservas.length === 0) {
@@ -2791,7 +2639,7 @@
                         const idx = parseInt(this.dataset.idx);
                         if (confirm(`Deseja realmente excluir a reserva "${reservas[idx].nome}"?`)) {
                             reservas.splice(idx, 1);
-                            salvarDadosFirebase();
+                            salvarReservas();
                             renderReservas();
                             renderInicio();
                         }
@@ -2803,7 +2651,18 @@
                 }, 100);
             }
 
-            // ---------- MODAL DE EDIÇÃO ----------
+            function renderTudo() {
+                renderCategorias();
+                renderInicio();
+                renderTabela();
+                renderReservas();
+                atualizarEstatisticas();
+                setTimeout(() => {
+                    desenharGraficoDistribuicaoReservas();
+                }, 200);
+            }
+
+            // ---------- MODAL ----------
             function abrirModalEdicao(idx) {
                 if (idx < 0 || idx >= reservas.length) return;
                 reservaEditando = idx;
@@ -2844,14 +2703,13 @@
                     data: data
                 };
 
-                salvarDadosFirebase();
+                salvarReservas();
                 fecharModalEdicao();
                 renderReservas();
                 renderInicio();
                 atualizarEstatisticas();
             }
 
-            // ---------- AÇÕES RÁPIDAS NO MODAL ----------
             function aplicarSaqueParcial() {
                 if (reservaEditando === null) return;
                 const valorSaque = parseFloat(inputSaqueParcial.value);
@@ -2890,7 +2748,7 @@
                 alert(`✅ Saque total de ${formatarMoeda(reservaAtual.valor, moeda)} realizado com sucesso!\nSaldo zerado.`);
             }
 
-            // ---------- ZERAR TODOS OS DADOS ----------
+            // ---------- ZERAR DADOS ----------
             function zerarTodosOsDados() {
                 const confirmacao = confirm(
                     '⚠️ ATENÇÃO! Você está prestes a APAGAR TODOS OS DADOS!\n\n' +
@@ -2914,12 +2772,17 @@
                 if (!confirmacao2) return;
 
                 try {
+                    localStorage.removeItem(STORAGE_LANCAMENTOS);
+                    localStorage.removeItem(STORAGE_RESERVAS);
+                    localStorage.removeItem(STORAGE_CATEGORIAS);
+                    localStorage.removeItem(STORAGE_LIMITE_CREDITO);
+
                     lancamentos = [];
                     reservas = [];
                     categorias = ['Salário', 'Aluguel', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação'];
                     limiteCredito = 0;
 
-                    salvarDadosFirebase();
+                    salvarCategorias();
                     renderTudo();
 
                     alert('✅ Todos os dados foram zerados com sucesso!');
@@ -2973,9 +2836,10 @@
 
                 if (tipo === 'aumento_limite') {
                     limiteCredito += valor;
+                    salvarLimiteCredito();
                 }
 
-                salvarDadosFirebase();
+                salvarLancamentos();
                 renderTudo();
             }
 
@@ -2999,7 +2863,7 @@
                     criadoEm: new Date().toISOString()
                 });
 
-                salvarDadosFirebase();
+                salvarReservas();
                 renderReservas();
                 renderInicio();
                 atualizarEstatisticas();
@@ -3012,7 +2876,7 @@
                 if (categorias.includes(nome)) { alert('Esta categoria já existe.'); return; }
 
                 categorias.push(nome);
-                salvarDadosFirebase();
+                salvarCategorias();
                 novaCategoriaInput.value = '';
                 renderCategorias();
             }
@@ -3246,7 +3110,7 @@
                                     importados++;
                                 }
                             });
-                            salvarDadosFirebase();
+                            salvarLancamentos();
                         }
 
                         if (reservasImportadas.length > 0) {
@@ -3263,7 +3127,7 @@
                                     reservasImp++;
                                 }
                             });
-                            salvarDadosFirebase();
+                            salvarReservas();
                         }
 
                         if (categoriasImportadas.length > 0) {
@@ -3276,7 +3140,7 @@
                                     if (c && !categorias.includes(c)) categorias.push(c);
                                 });
                             }
-                            salvarDadosFirebase();
+                            salvarCategorias();
                             categoriasImp = categoriasImportadas.length;
                         }
 
@@ -3305,23 +3169,12 @@
                 }
             }
 
-            function renderTudo() {
-                renderCategorias();
-                renderInicio();
-                renderTabela();
-                renderReservas();
-                atualizarEstatisticas();
-                setTimeout(() => {
-                    desenharGraficoDistribuicaoReservas();
-                }, 200);
-            }
-
             // ---------- DARK MODE ----------
             function toggleDarkMode() {
                 document.body.classList.toggle('dark-mode');
                 const isDark = document.body.classList.contains('dark-mode');
                 btnDarkMode.textContent = isDark ? '☀️' : '🌙';
-                localStorage.setItem('imperio_darkmode', isDark);
+                localStorage.setItem(STORAGE_DARKMODE, isDark);
                 setTimeout(() => {
                     desenharGraficoDistribuicaoReservas();
                     desenharGraficoReceitasDespesas();
@@ -3359,12 +3212,14 @@
             // ---------- INICIALIZAR SISTEMA ----------
             function inicializarSistema(user) {
                 currentUser = user;
-                carregarDadosFirebase(user);
+                carregarDados();
                 initTabs();
 
                 document.getElementById('headerDate').textContent =
                     new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long',
                         year: 'numeric' });
+
+                renderTudo();
 
                 let resizeTimer;
                 window.addEventListener('resize', function() {
@@ -3377,7 +3232,6 @@
                 });
             }
 
-            // Expor para autenticação
             window.inicializarSistema = inicializarSistema;
 
             // ---------- EVENTOS ----------
@@ -3432,6 +3286,14 @@
                 filtroMoeda.value = 'todas';
                 renderTabela();
             });
+
+            // Se já estiver logado, inicializar
+            if (document.getElementById('appContainer').classList.contains('active')) {
+                const session = JSON.parse(localStorage.getItem('imperio_session') || '{}');
+                if (session.username) {
+                    inicializarSistema(session.username);
+                }
+            }
 
         })();
     </script>
